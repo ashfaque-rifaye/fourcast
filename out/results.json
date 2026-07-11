@@ -1,0 +1,29 @@
+[
+ {
+  "task_id": "v1",
+  "captions": {
+   "formal": "A static camera captures continuous traffic on a major urban avenue lined with yellow autumn foliage, with the KOREA ELECTRIC ENGINEERING building and Korean text banners visible alongside the roadway.",
+   "sarcastic": "Behold the majestic flow of cars, buses, and trucks inching through intersections under traffic signals, because nothing captures the poetry of fall foliage like a long-exposure blur of tailpipes.",
+   "humorous_tech": "Traffic lights are basically the world's slowest standups\u2014everyone stops, waits for permission to speak, then rushes to merge before the next red signal.",
+   "humorous_non_tech": "Yellow trees, golden daylight, mountains in the distance \u2014 and still nobody's letting you merge. Typical Monday in paradise."
+  }
+ },
+ {
+  "task_id": "v3",
+  "captions": {
+   "formal": "Wearing a light jacket over an orange top, a focused employee operates a computer mouse and keyboard at her desk while the camera pans around her beneath circular disc ceiling lights.",
+   "sarcastic": "She's got the afro, the cross pendant, the pink nails, and a potted plant watching her every move, yet somehow the most exciting thing on screen is still a mouse being clicked.",
+   "humorous_tech": "Her afro is giving major cloud-scaling vibes, and those pink nails are clicking through merge conflicts like nobody's standup.",
+   "humorous_non_tech": "The cross pendant says faith, the pink nails say flair, the orange top under that jacket says 'I tried today' \u2014 and the only audience for all of it is a potted plant and some very round ceiling lights."
+  }
+ },
+ {
+  "task_id": "v2",
+  "captions": {
+   "formal": "A fluffy orange kitten sits beneath leafy bushes before walking steadily toward the camera along a sunlit dirt path, its large round eyes and raised bushy tail clearly visible.",
+   "sarcastic": "An orange kitten with large round eyes and a raised tail approaches through the undergrowth, delivering the kind of high-stakes drama only a cat on a dirt path can provide.",
+   "humorous_tech": "Single-threaded fluffy orange process exits the bush cache and walks the sunlit path toward the lens, tail raised like an antenna seeking a stronger signal.",
+   "humorous_non_tech": "A fluffy orange kitten emerges from the bushes like it's fashionably late to a nap appointment, tail held high and eyes wide enough to get out of any trouble."
+  }
+ }
+]

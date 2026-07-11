@@ -1,0 +1,29 @@
+[
+ {
+  "task_id": "v2",
+  "captions": {
+   "formal": "A fluffy orange kitten with a pink nose sits on a dirt path bordered by dense green bushes, then walks slowly toward the camera through the foliage.",
+   "sarcastic": "A kitten stands up on a dirt path and walks toward the camera through dense foliage, delivering the kind of high-stakes drama we all desperately needed today.",
+   "humorous_tech": "After caching in the bushes for a bit, the fluffy orange daemon starts a graceful walk-cycle toward the user \u2014 pink nose leading the GET request through the foliage.",
+   "humorous_non_tech": "This orange furball sits between the bushes, then marches forward through the leaves with the confidence of someone who just napped three hours and is ready for more."
+  }
+ },
+ {
+  "task_id": "v1",
+  "captions": {
+   "formal": "Korean signage and vertical banners mark the sidewalk as vehicles flow steadily through a multi-lane corridor bordered by yellow-leaved trees, apartment buildings, and a mountain range on the horizon.",
+   "sarcastic": "Behold the majestic Korean arterial road, where buses and cars flow in both directions with the same frantic enthusiasm as the yellow leaves giving up on their branches. The traffic lights cycle dutifully, as if anyone here is actually stopping.",
+   "humorous_tech": "The traffic lights are basically a flaky CI pipeline cycling red-green while cars blur past in both directions\u2014meanwhile those apartment high-rises in the background are the only monoliths that never need redeploying.",
+   "humorous_non_tech": "Yellow leaves, tall apartment towers, and a parade of vehicles blur past like everyone's trying to outrun Monday morning itself."
+  }
+ },
+ {
+  "task_id": "v3",
+  "captions": {
+   "formal": "Seated at a desk beside a potted green plant, an office worker with bright pink nail polish types on a keyboard beneath circular disc ceiling lights and glass partitions.",
+   "sarcastic": "Nothing says 'focused concentration' quite like a coral-orange top, bright pink nail polish, and a cross pendant \u2014 all while looking at a monitor.",
+   "humorous_tech": "Beige jacket over coral-orange: business casual on the outside, hot-fix on the inside \u2014 and those bright pink nails are deploying keystrokes at full throughput.",
+   "humorous_non_tech": "Monday energy in full effect: afro bun locked in tight, coral-orange top doing its best to seem cheerful, and those pink nails tapping away like rain on a car windshield during a traffic jam."
+  }
+ }
+]

@@ -3,10 +3,10 @@ name: container
 on:
   push:
     branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 jobs:
-  build:
+  build-sim-push:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -14,20 +14,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build image
-        run: docker build -t amdhack:ci .
-
-      - name: Smoke-run container
+      - name: Build image (linux/amd64 — judging VM arch)
         run: |
-          docker run -d --name smoke -p 8000:8000 -e FIREWORKS_API_KEY=dummy amdhack:ci
-          sleep 5
-          curl -sf http://localhost:8000/health
-          docker rm -f smoke
+          docker build --platform linux/amd64 \
+            --build-arg FW_KEY_B64="${{ secrets.FW_KEY_B64 }}" \
+            -t fourcast:ci .
+
+      - name: Harness simulation (contract check, no API spend)
+        run: |
+          mkdir -p ci-input ci-output
+          cp tasks.example.json ci-input/tasks.json
+          docker run --rm \
+            -v $PWD/ci-input:/input -v $PWD/ci-output:/output \
+            -e SKIP_API=1 fourcast:ci
+          python3 - <<'EOF'
+          import json
+          results = json.load(open("ci-output/results.json"))
+          assert isinstance(results, list) and len(results) == 3, "expected 3 results"
+          for r in results:
+              assert r["task_id"] and isinstance(r["captions"], dict)
+              for s in ["formal", "sarcastic", "humorous_tech", "humorous_non_tech"]:
+                  assert r["captions"][s].strip(), f"empty caption for {s}"
+          print("HARNESS CONTRACT OK:", [r["task_id"] for r in results])
+          EOF
 
       - name: Push to GHCR
-        if: github.event_name == 'push'
+        if: github.event_name != 'pull_request'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           IMAGE=ghcr.io/${{ github.repository }}:latest
-          docker tag amdhack:ci $IMAGE
+          docker tag fourcast:ci $IMAGE
           docker push $IMAGE
+          echo "Pushed $IMAGE — REMEMBER: set package visibility to PUBLIC once."
