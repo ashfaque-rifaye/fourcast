@@ -13,13 +13,25 @@ import os
 import sys
 import time
 
-from agent import fw
+from agent import contracts, fw
 from agent.pipeline import process_clip
 
 DEFAULT_IN = "/input/tasks.json"
 DEFAULT_OUT = "/output/results.json"
 BUDGET_S = float(os.getenv("T2_BUDGET_S", "510"))
 CLIP_CONCURRENCY = int(os.getenv("T2_CLIP_CONCURRENCY", "4"))
+# Per-clip wall-clock cap: a single stalled network read can never consume a
+# concurrency slot forever or drag the batch — it degrades to a grounded fallback.
+CLIP_TIMEOUT_S = float(os.getenv("T2_CLIP_TIMEOUT_S", "180"))
+
+
+def _fallback_result(task: dict) -> dict:
+    """Guaranteed complete result when a clip times out or fails hard."""
+    styles = task.get("styles") or contracts.STYLES
+    return {
+        "task_id": task.get("task_id", "unknown"),
+        "captions": {s: contracts.fallback_caption({}, s) for s in styles},
+    }
 
 
 def _atomic_write(path: str, results: list[dict]) -> None:
@@ -53,7 +65,12 @@ async def run(tasks_path: str, out_path: str) -> int:
 
     async def one(task: dict) -> None:
         async with sem:
-            res = await process_clip(task)  # never raises: pipeline guarantees a result
+            try:
+                res = await asyncio.wait_for(process_clip(task), timeout=CLIP_TIMEOUT_S)
+            except Exception as e:  # noqa: BLE001 — timeout or unexpected: ship a grounded fallback
+                print(f"[runner] {task.get('task_id')} fell back ({type(e).__name__}); "
+                      f"emitting grounded captions", file=sys.stderr)
+                res = _fallback_result(task)
             async with lock:
                 results.append(res)
                 _atomic_write(out_path, results)

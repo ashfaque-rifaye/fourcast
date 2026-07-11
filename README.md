@@ -68,7 +68,9 @@ FourCast is not a prompt wrapper. It is a **caption factory with quality control
 The public leaderboard is full of `TIMEOUT`, `OUTPUT_MISSING`, `INVALID_RESULTS_SCHEMA`, `RUNTIME_ERROR`, and `PULL_ERROR`. FourCast is built so none of those can happen:
 
 - **Atomic incremental writes** — `results.json` is re-written after *every* completed clip, so even a hard timeout leaves valid partial output on disk.
+- **Per-clip hard timeout** — a single stalled network read can never starve a concurrency slot or drag the batch average; it degrades to a grounded fallback (`T2_CLIP_TIMEOUT_S`).
 - **Every style always gets a caption** — deterministic grounded fallback means a key is never missing (a missing style scores zero).
+- **Budget-aware, reliability-first** — the refine round is best-effort and can be disabled (`T2_FAST=1`) so cleverness never costs the 10-minute budget.
 - **One bad clip can't crash the batch** — every stage degrades gracefully; the pipeline never raises.
 - **ASCII-escaped JSON** — harness-side decoding can never garble a caption.
 - **`linux/amd64` image, public on GHCR**, built and contract-tested in CI on every push.
@@ -95,7 +97,17 @@ docker run --rm -p 8000:8000 ghcr.io/ashfaque-rifaye/fourcast:latest \
 # open http://localhost:8000
 ```
 
-Pick a clip → watch the Scene Report facts appear as chips → four caption cards land, each showing the internal judge's `accuracy / style` scores.
+Pick a clip → watch the Scene Report facts appear as chips → four tone-coded caption cards land, each showing the internal judge's `accuracy / style` scores, per-card **copy** and **regenerate**, a live **jargon-firewall** flag on the non-tech card, and one-click **`results.json` download**.
+
+### Deploy the demo (public URL)
+
+The demo runs on **Google Cloud Run** (container-native, `ffmpeg` + long requests — Vercel can't do either). One command:
+
+```bash
+./deploy/deploy-cloudrun.sh          # or  deploy/deploy-cloudrun.ps1 on Windows
+```
+
+Full guide and the Vercel-vs-Cloud-Run rationale: [DEPLOY.md](DEPLOY.md).
 
 ## Quickstart (local)
 
@@ -164,10 +176,11 @@ SUBMISSION.md         lablab.ai submission copy + video script
 
 ## Roadmap
 
-- **Gemma track eligibility** — add a Gemma stylist path (Fireworks-hosted) to compete for the *Best Use of Gemma in Video Captioning* bonus.
+- ✅ **Gemma track eligibility** — opt-in Gemma stylist path (`T2_USE_GEMMA=1`) to compete for the *Best Use of Gemma in Video Captioning* bonus, keeping Kimi vision + gpt-oss judge with GLM 5.2 as fallback.
+- ✅ **Per-style temperature** — cool/precise for `formal`, warmer for the humorous tones.
+- ✅ **Reliability-first budget control** — per-clip timeout + optional fast mode.
 - **Audio grounding** — optional Whisper pass so speech-driven clips (technology/people categories) ground on dialogue as well as frames.
 - **Adaptive sampling** — scene-change-aware frame selection instead of even spacing.
-- **Per-style temperature** — cooler for `formal`, warmer for the humorous tones.
 
 ## Team & credits
 

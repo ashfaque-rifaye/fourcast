@@ -25,8 +25,20 @@ BASE_URL = os.getenv("FIREWORKS_BASE_URL", "https://api.fireworks.ai/inference/v
 # gpt-oss-120b fastest clean-JSON (1.6s), glm-5p2 2.1s, kimi-k2p6 vision OK (9s).
 VISION_MODEL = os.getenv("T2_VISION_MODEL", "accounts/fireworks/models/kimi-k2p6")
 VISION_FALLBACK = os.getenv("T2_VISION_FALLBACK") or None
-STYLIST_MODEL = os.getenv("T2_STYLIST_MODEL", "accounts/fireworks/models/glm-5p2")
-STYLIST_FALLBACK = os.getenv("T2_STYLIST_FALLBACK", "accounts/fireworks/models/kimi-k2p6")
+
+# Gemma stylist path (opt-in) — unlocks the "Best Use of Gemma in Video Captioning"
+# bonus. Set T2_USE_GEMMA=1 to route the stylist through Gemma on Fireworks while
+# keeping Kimi vision + gpt-oss judge. GLM 5.2 stays the fallback, so if Gemma is
+# unavailable on the key the pipeline degrades gracefully instead of failing.
+USE_GEMMA = os.getenv("T2_USE_GEMMA") == "1"
+GEMMA_MODEL = os.getenv("T2_GEMMA_MODEL", "accounts/fireworks/models/gemma-4-31b-it")
+
+STYLIST_MODEL = os.getenv("T2_STYLIST_MODEL") or (
+    GEMMA_MODEL if USE_GEMMA else "accounts/fireworks/models/glm-5p2"
+)
+STYLIST_FALLBACK = os.getenv("T2_STYLIST_FALLBACK") or (
+    "accounts/fireworks/models/glm-5p2" if USE_GEMMA else "accounts/fireworks/models/kimi-k2p6"
+)
 JUDGE_MODEL = os.getenv("T2_JUDGE_MODEL", "accounts/fireworks/models/gpt-oss-120b")
 JUDGE_FALLBACK = os.getenv("T2_JUDGE_FALLBACK", "accounts/fireworks/models/glm-5p1")
 

@@ -5,6 +5,7 @@ Every stage degrades gracefully; a clip ALWAYS returns a full captions dict
 """
 import asyncio
 import json
+import os
 import sys
 
 from agent import contracts, fw
@@ -12,6 +13,20 @@ from agent.video import extract_frames
 
 ACC_THRESHOLD = 0.85
 STYLE_THRESHOLD = 0.85
+
+# Per-style sampling temperature: cool + precise for formal, warmer for the
+# humorous tones where lexical variety is the point.
+STYLE_TEMPS = {
+    "formal": 0.35,
+    "sarcastic": 0.8,
+    "humorous_tech": 0.9,
+    "humorous_non_tech": 0.9,
+}
+
+# Leaderboard lesson: elaborate self-judge/refine loops that miss the time budget
+# score WORSE than a simple accurate pass. Refinement is therefore best-effort and
+# can be disabled globally (T2_FAST=1) or skipped per-clip when time is short.
+FAST = os.getenv("T2_FAST") == "1"
 
 
 async def perceive(url: str) -> dict:
@@ -39,7 +54,8 @@ async def _generate(scene_json: str, style: str, k: int = 3) -> list[str]:
             contract=contracts.STYLE_CONTRACTS[style])},
     ]
     raw = await fw.chat(msgs, fw.STYLIST_MODEL, fw.STYLIST_FALLBACK,
-                        max_tokens=1600, temperature=0.9, json_mode=True)
+                        max_tokens=1600, temperature=STYLE_TEMPS.get(style, 0.9),
+                        json_mode=True)
     cands = [c.strip() for c in fw.parse_json_block(raw).get("candidates", []) if c.strip()]
     if not cands:
         raise RuntimeError(f"stylist returned no candidates for {style}")
@@ -67,7 +83,7 @@ async def _judge(scene_json: str, style: str, candidates: list[str]) -> dict:
     return fw.parse_json_block(raw)
 
 
-async def caption_style(scene: dict, style: str) -> dict:
+async def caption_style(scene: dict, style: str, allow_refine: bool = True) -> dict:
     """Best caption for one style, with the internal judge's scores attached."""
     scene_json = json.dumps(scene, ensure_ascii=False)
     if fw.SKIP_API:
@@ -82,7 +98,7 @@ async def caption_style(scene: dict, style: str) -> dict:
     acc = float(scores.get(best_i, {}).get("accuracy", 0.7))
     sty = float(scores.get(best_i, {}).get("style", 0.7))
 
-    if acc < ACC_THRESHOLD or sty < STYLE_THRESHOLD:
+    if allow_refine and not FAST and (acc < ACC_THRESHOLD or sty < STYLE_THRESHOLD):
         try:
             msgs = [
                 {"role": "system", "content": contracts.STYLIST_SYSTEM},
