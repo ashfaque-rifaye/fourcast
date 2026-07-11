@@ -67,9 +67,26 @@ Env (.env local; baked for container — see Open Questions): `FIREWORKS_API_KEY
 
 ## High-priority tasks remaining (in order)
 - [x] 1. Demo UI browser-tested on :8017 — kitten clip: judge badges 1.00/1.00, 1.00/1.00, 0.95/1.00, 0.85/1.00
-- [x] 6a. 7-slide deck DONE + visually QA'd: assets/FourCast_Deck.pptx (generator: scripts/make_deck.js;
-       regenerate: `$env:NODE_PATH=(npm root -g); node scripts/make_deck.js`). Slide PNGs in assets/deck_png/.
-       COVER IMAGE = assets/deck_png/Slide1.PNG. Video script + form copy: SUBMISSION.md. FLUX image API 401s on this key — skipped.
+- [x] 1b. **FourCast Studio v2 (2026-07-11 ~23:00)** — complete UI rebuild: app/static/index.html (aurora/glass
+       design, drag&drop + local upload + yt-dlp social import, in-page video player + metadata + 30s-2min
+       validation, SSE live pipeline with real frame filmstrip, editable caption cards with judge score rings +
+       AI rewrite actions + undo, AI content pack w/ analytics gauges, SRT/VTT/TXT/MD/JSON exports, dark/light,
+       mobile-safe). Backend: probe/upload/media/stream/rewrite/content_pack endpoints in app/main.py.
+       agent/ change: caption_style/_generate accept optional temperature (harness path unchanged).
+       Verified end-to-end on :8017 (kitten clip 59s: 4 styles 0.80–1.00, pack rendered; upload+YouTube probes OK).
+       `?mock=1` = canned results view for screenshots/cover (add `&theme=light` for light mode).
+       ⚠ GEMMA FINDING (23:15 IST re-probe): key has NO Gemma access (/models lists 7, zero gemma; all gemma IDs
+       404) → T2_USE_GEMMA silently falls back to GLM 5.2. Gemma bonus NOT honestly claimable on this key.
+- [x] 6a. 7-slide deck REDESIGNED (premium white/agency theme) + QA'd: assets/FourCast_Deck.pptx.
+       Pipeline (run in order from repo root):
+         1. `python scripts/gen_assets.py`      -> assets/gen/*.png (gradient art: mesh bgs, icon tiles, wordmark, metrics)
+         2. `$env:NODE_PATH=(npm root -g); node scripts/make_deck.js`  -> assets/FourCast_Deck.pptx
+         3. `python scripts/add_transitions.py`  -> injects fade transitions
+       Preview PNGs: `powershell -File scripts/export_png.ps1` (needs PowerPoint) -> assets/deck_png/.
+       Design: white canvas, crimson->violet->blue gradient system, glass cards, soft shadows, gradient
+       icon tiles + oversized gradient metrics. NOTE: pptxgenjs mutates shadow objects in place — always
+       pass a FRESH shadow object per shape (see shadow()/iconShadow() in make_deck.js) or the file corrupts.
+       COVER IMAGE = assets/deck_png/Slide1.PNG. Video script + form copy: SUBMISSION.md.
 - [ ] 2. **USER GATE** Create public repo: `cd "D:\Projects\AMD Hackathon Jul 26\AMDHack"; gh repo create fourcast --public --source . --push`
        (AI was classifier-blocked from doing this; everything is committed and ready to push)
 - [ ] 3. **USER GATE** after repo exists — set the container key secret (AI must not touch the key):

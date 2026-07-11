@@ -46,7 +46,8 @@ async def perceive(url: str) -> dict:
     return fw.parse_json_block(raw)
 
 
-async def _generate(scene_json: str, style: str, k: int = 3) -> list[str]:
+async def _generate(scene_json: str, style: str, k: int = 3,
+                    temperature: float | None = None) -> list[str]:
     msgs = [
         {"role": "system", "content": contracts.STYLIST_SYSTEM},
         {"role": "user", "content": contracts.STYLIST_USER.format(
@@ -54,7 +55,9 @@ async def _generate(scene_json: str, style: str, k: int = 3) -> list[str]:
             contract=contracts.STYLE_CONTRACTS[style])},
     ]
     raw = await fw.chat(msgs, fw.STYLIST_MODEL, fw.STYLIST_FALLBACK,
-                        max_tokens=1600, temperature=STYLE_TEMPS.get(style, 0.9),
+                        max_tokens=1600,
+                        temperature=temperature if temperature is not None
+                        else STYLE_TEMPS.get(style, 0.9),
                         json_mode=True)
     cands = [c.strip() for c in fw.parse_json_block(raw).get("candidates", []) if c.strip()]
     if not cands:
@@ -83,13 +86,18 @@ async def _judge(scene_json: str, style: str, candidates: list[str]) -> dict:
     return fw.parse_json_block(raw)
 
 
-async def caption_style(scene: dict, style: str, allow_refine: bool = True) -> dict:
-    """Best caption for one style, with the internal judge's scores attached."""
+async def caption_style(scene: dict, style: str, allow_refine: bool = True,
+                        temperature: float | None = None) -> dict:
+    """Best caption for one style, with the internal judge's scores attached.
+
+    temperature overrides the per-style default (demo UI creativity slider);
+    the harness path never passes it, so leaderboard behaviour is unchanged.
+    """
     scene_json = json.dumps(scene, ensure_ascii=False)
     if fw.SKIP_API:
         return {"text": contracts.fallback_caption(scene, style), "accuracy": 0.0, "style": 0.0}
 
-    candidates = _firewall(style, await _generate(scene_json, style))
+    candidates = _firewall(style, await _generate(scene_json, style, temperature=temperature))
     verdict = await _judge(scene_json, style, candidates)
     scores = {s["i"]: s for s in verdict.get("scores", []) if isinstance(s, dict) and "i" in s}
     best_i = verdict.get("best", 0)

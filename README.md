@@ -89,7 +89,7 @@ docker run --rm \
 - Exit code 0. ~20s per clip wall-clock at concurrency 4 — a 12-clip hidden set fits comfortably inside the 10-minute budget.
 - Credentials ride **inside** the image (Track 2 injects none). `SKIP_API=1` runs the full contract offline (CI does this on every push — zero API spend).
 
-## Demo UI (same image, different command)
+## FourCast Studio — the demo UI (same image, different command)
 
 ```bash
 docker run --rm -p 8000:8000 ghcr.io/ashfaque-rifaye/fourcast:latest \
@@ -97,7 +97,28 @@ docker run --rm -p 8000:8000 ghcr.io/ashfaque-rifaye/fourcast:latest \
 # open http://localhost:8000
 ```
 
-Pick a clip → watch the Scene Report facts appear as chips → four tone-coded caption cards land, each showing the internal judge's `accuracy / style` scores, per-card **copy** and **regenerate**, a live **jargon-firewall** flag on the non-tech card, and one-click **`results.json` download**.
+A full AI captioning studio on top of the same pipeline the harness runs:
+
+- **Any source in** — drag & drop / local upload, direct `.mp4` links, and auto-resolved
+  YouTube · TikTok · Instagram · X · Facebook · Vimeo links (via yt-dlp), plus Google
+  Drive and Dropbox share links. The clip **plays right in the studio** with duration /
+  resolution / fps / audio metadata and a 30s–2min track-window validation.
+- **Live pipeline** — every stage streams over SSE as it really happens: probe → frame
+  filmstrip (the actual extracted frames) → Scene-Report chips → four caption cards
+  landing one by one with the internal judge's `accuracy / style` score rings.
+- **Creativity slider** — maps to per-style sampling temperature (the four track styles
+  themselves are never compromised — they're the contract).
+- **Editing studio** — captions are editable inline, with AI actions (shorten, expand,
+  punchier, simplify, ±emoji, fix grammar), per-card regenerate (re-judged), undo, and
+  a live jargon-firewall flag on the non-tech card.
+- **AI content pack** — titles, hook, hashtags, keywords, SEO description, alt text,
+  CTA, topic/emotion detection, and AI-estimated readability / engagement / virality /
+  accessibility gauges with platform-fit bars.
+- **Exports** — `results.json` (harness schema), `.txt`, `.md`, and `.srt` / `.vtt`
+  subtitles in any of the four voices. Keyboard shortcuts throughout; dark & light themes.
+
+Tip: `/?mock=1` renders the full results view with canned data (no API spend) — handy
+for screenshots; add `&theme=light` for the light variant.
 
 ### Deploy the demo (public URL)
 
@@ -161,7 +182,8 @@ agent/                THE submission artifact (batch agent)
   pipeline.py         per-clip Ground → Generate → Judge → Refine
   runner.py           harness I/O · concurrency · budget guard · atomic writes
   __main__.py         python -m agent
-app/main.py           demo UI (FastAPI, single file) — same image, different CMD
+app/main.py           FourCast Studio backend (probe · upload · SSE pipeline · content pack)
+app/static/index.html FourCast Studio frontend (single file, zero build step)
 scripts/
   model_matrix.py     per-model JSON-mode / latency probe
   make_deck.js        pitch-deck generator
@@ -176,7 +198,7 @@ SUBMISSION.md         lablab.ai submission copy + video script
 
 ## Roadmap
 
-- ✅ **Gemma track eligibility** — opt-in Gemma stylist path (`T2_USE_GEMMA=1`) to compete for the *Best Use of Gemma in Video Captioning* bonus, keeping Kimi vision + gpt-oss judge with GLM 5.2 as fallback.
+- ✅ **Gemma track eligibility** — opt-in Gemma stylist path (`T2_USE_GEMMA=1`) to compete for the *Best Use of Gemma in Video Captioning* bonus, keeping Kimi vision + gpt-oss judge with GLM 5.2 as fallback. *Requires a Fireworks key with Gemma access; without it the pipeline transparently falls back to GLM 5.2.*
 - ✅ **Per-style temperature** — cool/precise for `formal`, warmer for the humorous tones.
 - ✅ **Reliability-first budget control** — per-clip timeout + optional fast mode.
 - **Audio grounding** — optional Whisper pass so speech-driven clips (technology/people categories) ground on dialogue as well as frames.
