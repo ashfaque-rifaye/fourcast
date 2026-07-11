@@ -216,13 +216,16 @@ input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;
 .card h3{display:flex;align-items:center;gap:9px;font-size:12px;text-transform:uppercase;letter-spacing:1.6px;margin-bottom:14px}
 .card h3 .nm{color:var(--ac)}
 .card h3 .tico{font-size:15px}
-.rings{margin-left:auto;display:flex;gap:6px;align-items:center}
-.ring{position:relative;width:34px;height:34px}
+.rings{margin-left:auto;display:flex;gap:14px;align-items:flex-start}
+.ringwrap{display:flex;flex-direction:column;align-items:center;gap:4px}
+.ring{position:relative;width:46px;height:46px;color:var(--ac)}
 .ring svg{transform:rotate(-90deg)}
-.ring .track{stroke:var(--line);fill:none;stroke-width:3}
-.ring .bar{stroke:var(--ac);fill:none;stroke-width:3;stroke-linecap:round;transition:stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1)}
-.ring .val{position:absolute;inset:0;display:grid;place-items:center;font:8.5px var(--mono);color:var(--dim)}
-.ring .cap{position:absolute;left:50%;transform:translateX(-50%);bottom:-13px;font-size:8px;color:var(--dim);letter-spacing:.5px;text-transform:uppercase}
+.ring .track{stroke:var(--line);fill:none;stroke-width:3.5}
+.ring .bar{stroke:currentColor;fill:none;stroke-width:3.5;stroke-linecap:round;
+  transition:stroke-dashoffset 1.1s cubic-bezier(.2,.8,.2,1);filter:drop-shadow(0 0 5px currentColor)}
+.ring.hi{color:var(--good)} .ring.mid{color:var(--warn)} .ring.lo{color:var(--bad)}
+.ring .val{position:absolute;inset:0;display:grid;place-items:center;font:13.5px/1 var(--mono);font-weight:700;color:currentColor}
+.rlbl{font-size:8.5px;letter-spacing:1px;color:var(--dim);text-transform:uppercase;font-weight:600}
 .cap-text{font-size:16.5px;line-height:1.6;min-height:52px;outline:none;border-radius:10px;padding:4px 6px;margin:2px -6px;transition:.2s}
 .cap-text:focus{background:var(--glass2);box-shadow:0 0 0 1.5px var(--ac)}
 .cap-text.busy{opacity:.4;filter:blur(1px)}
@@ -765,11 +768,13 @@ function startFlavor(){let i=0;$('liveline').textContent=FLAVOR[0];
 function stopFlavor(msg){clearInterval(flavorTimer);$('liveline').textContent=msg||'';}
 
 /* ================================================================= caption cards */
-function ringSVG(pct,label){const r=14,c=2*Math.PI*r,off=c*(1-pct);
-  return `<div class="ring" title="${label} ${(pct).toFixed(2)}">
-    <svg width="34" height="34"><circle class="track" cx="17" cy="17" r="${r}"/>
-    <circle class="bar" cx="17" cy="17" r="${r}" stroke-dasharray="${c}" stroke-dashoffset="${c}" data-off="${off}"/></svg>
-    <span class="val">${label}</span></div>`;}
+function ringSVG(pct,label){const r=16,c=2*Math.PI*r,off=c*(1-pct);
+  const band=pct>=0.85?'hi':pct>=0.6?'mid':'lo';
+  const full=label==='acc'?'Accuracy':'Style match';
+  return `<div class="ringwrap"><div class="ring ${band}" title="${full}: ${(pct).toFixed(2)} of 1.00">
+    <svg width="46" height="46" viewBox="0 0 46 46"><circle class="track" cx="23" cy="23" r="${r}"/>
+    <circle class="bar" cx="23" cy="23" r="${r}" stroke-dasharray="${c}" stroke-dashoffset="${c}" data-off="${off}"/></svg>
+    <span class="val">${pct.toFixed(2)}</span></div><span class="rlbl">${label==='acc'?'Accuracy':'Style'}</span></div>`;}
 function cardShell(style){const [nm,ico]=STYLES[style];
   return `<div class="card ${style}" id="card-${style}">
     <h3><span class="tico" style="color:var(--ac)">${ICON(ico,15)}</span><span class="nm">${nm}</span><span class="modelbadge" id="mb-${style}"></span><span class="rings" id="rings-${style}"></span></h3>
