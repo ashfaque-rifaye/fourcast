@@ -30,7 +30,9 @@ Built solo in one day on Fireworks AI (AMD-hardware-hosted serverless models).
 - **Demo URL:** https://fourcast-demo-163580532635.us-central1.run.app  ← LIVE on Google Cloud Run (verified end-to-end: kitten clip, judge 0.95–1.00, 44s)
 - **Video:** record per script below → YouTube unlisted → paste link
 - **Slides:** assets/FourCast_Deck.pptx → upload
-- **Cover image:** 1200×675 screenshot of the demo UI right after a run completes (four cards + judge badges visible). Crop browser chrome.
+- **Cover image:** 1200×675 screenshot of the Studio results view — open `<demo-url>/?mock=1`
+  (canned data, no API spend; add `&theme=light` for the light variant), capture the four
+  caption cards + judge rings. Crop browser chrome.
 
 ## Video script (100 seconds, screen-record the demo UI)
 1. **[0–10s] Hook** — UI open, empty. "Every caption tool can describe a video. The hard part is saying it in the right voice — four of them."
