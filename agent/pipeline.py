@@ -179,9 +179,17 @@ async def process_clip_verbose(task: dict) -> tuple[dict, dict]:
 
 
 async def process_clip(task: dict) -> dict:
-    """Harness contract: one task in -> guaranteed complete result out."""
+    """Harness contract: one task in -> guaranteed complete result out.
+
+    Schema hedge: the Track 2 guide documents the per-style output under the
+    key "captions", but the generic failure-status table describes the result
+    schema with an "answer" field. We emit BOTH keys with identical values so
+    the result validates whichever key the harness checks.
+    """
     _, detailed = await process_clip_verbose(task)
+    captions = {style: d["text"] for style, d in detailed.items()}
     return {
         "task_id": task.get("task_id", "unknown"),
-        "captions": {style: d["text"] for style, d in detailed.items()},
+        "captions": captions,
+        "answer": captions,
     }

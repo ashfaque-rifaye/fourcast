@@ -32,10 +32,10 @@ jobs:
           results = json.load(open("ci-output/results.json"))
           assert isinstance(results, list) and len(results) == 3, "expected 3 results"
           for r in results:
-              assert r["task_id"] and isinstance(r["captions"], dict)
+              assert r["task_id"] and isinstance(r["captions"], dict) and isinstance(r["answer"], dict)
               for s in ["formal", "sarcastic", "humorous_tech", "humorous_non_tech"]:
-                  assert r["captions"][s].strip(), f"empty caption for {s}"
-          print("HARNESS CONTRACT OK:", [r["task_id"] for r in results])
+                  assert r["captions"][s].strip() and r["answer"][s].strip(), f"empty caption for {s}"
+          print("HARNESS CONTRACT OK (captions + answer):", [r["task_id"] for r in results])
           EOF
 
       - name: Push to GHCR

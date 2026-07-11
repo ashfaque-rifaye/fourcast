@@ -1000,7 +1000,8 @@ function cues(style){const dur=S.probe?.meta?.duration||60;
   return parts.map((p,i)=>({a:i*per,b:(i+1)*per-.05,t:p}));}
 const X={
   json(){if(!Object.keys(S.captions).length)return;
-    dl('results.json',JSON.stringify([{task_id:'demo',captions:Object.fromEntries(Object.entries(S.captions).map(([k,v])=>[k,v.text]))}],null,2),'application/json');},
+    const caps=Object.fromEntries(Object.entries(S.captions).map(([k,v])=>[k,v.text]));
+    dl('results.json',JSON.stringify([{task_id:'demo',captions:caps,answer:caps}],null,2),'application/json');},
   txt(){dl('fourcast_captions.txt',Object.entries(S.captions).map(([k,v])=>`[${STYLES[k][0]}]\n${v.text}\n`).join('\n'));},
   md(){let md=`# FourCast captions\n\n`;
     Object.entries(S.captions).forEach(([k,v])=>{md+=`## ${STYLES[k][0]} _(judge ${(v.accuracy??0).toFixed(2)}/${(v.style??0).toFixed(2)})_\n\n${v.text}\n\n`;});

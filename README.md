@@ -85,7 +85,9 @@ docker run --rm \
 ```
 
 - **Reads** `/input/tasks.json`: `[{"task_id", "video_url", "styles": [...]}]`
-- **Writes** `/output/results.json`: `[{"task_id", "captions": {style: text}}]`
+- **Writes** `/output/results.json`: `[{"task_id", "captions": {style: text}, "answer": {style: text}}]`
+  — the per-style map is emitted under **both** `captions` and `answer` (identical values) so the
+  result validates whichever key the harness checks.
 - Exit code 0. ~20s per clip wall-clock at concurrency 4 — a 12-clip hidden set fits comfortably inside the 10-minute budget.
 - Credentials ride **inside** the image (Track 2 injects none). `SKIP_API=1` runs the full contract offline (CI does this on every push — zero API spend).
 

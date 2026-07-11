@@ -28,9 +28,12 @@ CLIP_TIMEOUT_S = float(os.getenv("T2_CLIP_TIMEOUT_S", "180"))
 def _fallback_result(task: dict) -> dict:
     """Guaranteed complete result when a clip times out or fails hard."""
     styles = task.get("styles") or contracts.STYLES
+    caps = {s: contracts.fallback_caption({}, s) for s in styles}
+    # Dual-key schema hedge (see pipeline.process_clip): emit captions + answer.
     return {
         "task_id": task.get("task_id", "unknown"),
-        "captions": {s: contracts.fallback_caption({}, s) for s in styles},
+        "captions": caps,
+        "answer": caps,
     }
 
 
@@ -47,10 +50,12 @@ def _validate(results: list[dict]) -> None:
     assert isinstance(results, list)
     for r in results:
         assert isinstance(r.get("task_id"), str)
-        caps = r.get("captions")
-        assert isinstance(caps, dict) and caps
-        for k, v in caps.items():
-            assert isinstance(k, str) and isinstance(v, str) and v.strip()
+        # both keys must hold a complete, non-empty {style: text} dict
+        for key in ("captions", "answer"):
+            caps = r.get(key)
+            assert isinstance(caps, dict) and caps, f"missing/empty {key}"
+            for k, v in caps.items():
+                assert isinstance(k, str) and isinstance(v, str) and v.strip()
 
 
 async def run(tasks_path: str, out_path: str) -> int:
