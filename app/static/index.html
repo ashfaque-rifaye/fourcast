@@ -216,18 +216,23 @@ input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;
 .card h3{display:flex;align-items:center;gap:9px;font-size:12px;text-transform:uppercase;letter-spacing:1.6px;margin-bottom:14px}
 .card h3 .nm{color:var(--ac)}
 .card h3 .tico{font-size:15px}
-.rings{margin-left:auto;display:flex;gap:16px;align-items:flex-start}
-.ringwrap{display:flex;flex-direction:column;align-items:center;gap:5px}
-.ring{position:relative;width:54px;height:54px;color:var(--ac)}
+.rings{margin-left:auto;display:flex;gap:22px;align-items:flex-start}
+/* base ring kept only for the content-pack gauges */
+.ring{position:relative;width:34px;height:34px}
 .ring svg{transform:rotate(-90deg)}
 .ring .track{stroke:var(--line);fill:none;stroke-width:3}
-.ring .bar{stroke:currentColor;fill:none;stroke-width:3;stroke-linecap:round;
-  transition:stroke-dashoffset 1.1s cubic-bezier(.2,.8,.2,1);filter:drop-shadow(0 0 4px currentColor)}
-.ring.hi{color:var(--good)} .ring.mid{color:var(--warn)} .ring.lo{color:var(--bad)}
-.ring .val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  font:800 15px/1 var(--font);color:var(--text)}
-.ring .val sub{font:600 9px/1 var(--font);color:var(--dim);margin-left:1px;align-self:flex-end}
-.rlbl{font-size:9px;letter-spacing:1px;color:var(--dim);text-transform:uppercase;font-weight:600}
+.ring .bar{stroke:var(--ac);fill:none;stroke-width:3;stroke-linecap:round;transition:stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1)}
+.ring .val{position:absolute;inset:0;display:grid;place-items:center;font:8.5px var(--mono);color:var(--dim)}
+/* caption-card score: simple number + gradient underline */
+.metric{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:56px}
+.metric .mval{font:800 23px/1 var(--font);letter-spacing:-.5px;
+  background:linear-gradient(90deg,var(--accent),var(--violet) 55%,var(--cyan));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.metric .mline{width:100%;height:3px;border-radius:3px;background:var(--line);overflow:hidden}
+.metric .mline i{display:block;height:100%;width:0;border-radius:3px;
+  background:linear-gradient(90deg,var(--accent),var(--violet),var(--cyan));
+  transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.metric .mlbl{font-size:8.5px;letter-spacing:1.2px;color:var(--dim);text-transform:uppercase;font-weight:600}
 .cap-text{font-size:16.5px;line-height:1.6;min-height:52px;outline:none;border-radius:10px;padding:4px 6px;margin:2px -6px;transition:.2s}
 .cap-text:focus{background:var(--glass2);box-shadow:0 0 0 1.5px var(--ac)}
 .cap-text.busy{opacity:.4;filter:blur(1px)}
@@ -770,14 +775,13 @@ function startFlavor(){let i=0;$('liveline').textContent=FLAVOR[0];
 function stopFlavor(msg){clearInterval(flavorTimer);$('liveline').textContent=msg||'';}
 
 /* ================================================================= caption cards */
-function ringSVG(pct,label){const r=20,c=2*Math.PI*r,off=c*(1-pct);
-  const band=pct>=0.85?'hi':pct>=0.6?'mid':'lo';
+function ringSVG(pct,label){
+  const val=(pct??0).toFixed(2);
   const full=label==='acc'?'Accuracy':'Style match';
-  const pctInt=Math.round(pct*100);
-  return `<div class="ringwrap"><div class="ring ${band}" title="${full}: ${(pct).toFixed(2)} of 1.00">
-    <svg width="54" height="54" viewBox="0 0 54 54"><circle class="track" cx="27" cy="27" r="${r}"/>
-    <circle class="bar" cx="27" cy="27" r="${r}" stroke-dasharray="${c}" stroke-dashoffset="${c}" data-off="${off}"/></svg>
-    <span class="val">${pctInt}<sub>%</sub></span></div><span class="rlbl">${label==='acc'?'Accuracy':'Style'}</span></div>`;}
+  return `<div class="metric" title="${full}: ${val} of 1.00">
+    <span class="mval">${val}</span>
+    <span class="mline"><i data-w="${Math.round((pct??0)*100)}%"></i></span>
+    <span class="mlbl">${label==='acc'?'Accuracy':'Style'}</span></div>`;}
 function cardShell(style){const [nm,ico]=STYLES[style];
   return `<div class="card ${style}" id="card-${style}">
     <h3><span class="tico" style="color:var(--ac)">${ICON(ico,15)}</span><span class="nm">${nm}</span><span class="modelbadge" id="mb-${style}"></span><span class="rings" id="rings-${style}"></span></h3>
@@ -832,7 +836,7 @@ function fillCard(style,d,animate=true){
   c.querySelector('.mrow').innerHTML=capMetrics(d.text||'');
   const rings=$('rings-'+style);
   rings.innerHTML=ringSVG(d.accuracy??0,'acc')+ringSVG(d.style??0,'sty');
-  requestAnimationFrame(()=>rings.querySelectorAll('.bar').forEach(b=>b.style.strokeDashoffset=b.dataset.off));
+  requestAnimationFrame(()=>rings.querySelectorAll('.mline i').forEach(b=>b.style.width=b.dataset.w));
   const j=c.querySelector('.jargon');
   if(d.jargon&&d.jargon.length){j.classList.add('on');j.textContent='⚠ Jargon firewall flagged: '+d.jargon.join(', ');}
   else{j.classList.remove('on');}
