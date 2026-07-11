@@ -66,14 +66,21 @@ Env (.env local; baked for container — see Open Questions): `FIREWORKS_API_KEY
 - [x] Track decision: **Track 2** (user call, 12:15 IST). Idea locked: FourCast (this doc).
 
 ## High-priority tasks remaining (in order)
-- [ ] 1. Browser-test demo UI locally (uvicorn :8017) + capture screenshots for slides
-- [ ] 2. Create public repo `fourcast` (gh authed as ashfaque-rifaye) + push + CI green
-- [ ] 3. USER: run the one-liner to set FW_KEY_B64 repo secret (never handled by AI) → re-run CI → image carries key
-- [ ] 4. USER: GHCR package → Settings → Change visibility → PUBLIC (no API for this; UI only)
-- [ ] 5. Deploy demo UI (options: Render free / HF Spaces / cloudflared tunnel — pick with user)
-- [ ] 6. FLUX cover image + 7-slide deck + video script (user records screen) + lablab form copy
+- [x] 1. Demo UI browser-tested on :8017 — kitten clip: judge badges 1.00/1.00, 1.00/1.00, 0.95/1.00, 0.85/1.00
+- [x] 6a. 7-slide deck DONE + visually QA'd: assets/FourCast_Deck.pptx (generator: scripts/make_deck.js;
+       regenerate: `$env:NODE_PATH=(npm root -g); node scripts/make_deck.js`). Slide PNGs in assets/deck_png/.
+       COVER IMAGE = assets/deck_png/Slide1.PNG. Video script + form copy: SUBMISSION.md. FLUX image API 401s on this key — skipped.
+- [ ] 2. **USER GATE** Create public repo: `cd "D:\Projects\AMD Hackathon Jul 26\AMDHack"; gh repo create fourcast --public --source . --push`
+       (AI was classifier-blocked from doing this; everything is committed and ready to push)
+- [ ] 3. **USER GATE** after repo exists — set the container key secret (AI must not touch the key):
+       `cd "D:\Projects\AMD Hackathon Jul 26\AMDHack"; $k=((Get-Content .env | Select-String '^FIREWORKS_API_KEY=').ToString() -replace '^FIREWORKS_API_KEY=',''); [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($k)) | gh secret set FW_KEY_B64 -R ashfaque-rifaye/fourcast`
+       Then: `gh workflow run container -R ashfaque-rifaye/fourcast` (or push any commit) → CI must be GREEN.
+- [ ] 4. **USER GATE** GHCR package public: github.com/users/ashfaque-rifaye/packages/container/fourcast/settings → Change visibility → Public.
+       Verify: `docker pull ghcr.io/ashfaque-rifaye/fourcast:latest` from any logged-out machine (or incognito check the package page).
+- [ ] 5. Demo URL: decide Render/HF Spaces/cloudflared (localhost:8017 works; server currently RUNNING for video recording)
+- [ ] 6b. USER records the 100s video per SUBMISSION.md script (demo UI is live at localhost:8017)
 - [ ] 7. SUBMIT by ~19:30 IST (lablab.ai/.../mindflayer/submission) → verify "Qualified (preview)" → iterate (≤10/hr!)
-- [ ] 8. (If time) tone-polish pass: sarcastic contract sharpening; test 2 more diverse clips (sports/food)
+- [ ] 8. (If time) test 2 diverse clips (sports/food); sarcastic-contract polish
 
 ## Technical debt & open questions
 - ⚠ Kimi vision image_url format unverified (test #2 above decides; fallback = none on this key → would need frames→text via... no VLM alternative; mitigation: request model access or use image descriptions via flux? NO — if kimi vision fails, escalate to user immediately).
