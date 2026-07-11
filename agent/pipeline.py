@@ -47,22 +47,27 @@ async def perceive(url: str) -> dict:
 
 
 async def _generate(scene_json: str, style: str, k: int = 3,
-                    temperature: float | None = None) -> list[str]:
+                    temperature: float | None = None,
+                    model: str | None = None,
+                    fallback: str | None = None) -> tuple[list[str], str]:
+    """Returns (candidates, model_id_that_answered). model/fallback let the demo
+    route the stylist to Gemma while keeping the harness default (GLM)."""
     msgs = [
         {"role": "system", "content": contracts.STYLIST_SYSTEM},
         {"role": "user", "content": contracts.STYLIST_USER.format(
             scene_report=scene_json, k=k, style_name=style,
             contract=contracts.STYLE_CONTRACTS[style])},
     ]
-    raw = await fw.chat(msgs, fw.STYLIST_MODEL, fw.STYLIST_FALLBACK,
-                        max_tokens=1600,
-                        temperature=temperature if temperature is not None
-                        else STYLE_TEMPS.get(style, 0.9),
-                        json_mode=True)
+    raw, used = await fw.chat(msgs, model or fw.STYLIST_MODEL,
+                              fallback if fallback is not None else fw.STYLIST_FALLBACK,
+                              max_tokens=1600,
+                              temperature=temperature if temperature is not None
+                              else STYLE_TEMPS.get(style, 0.9),
+                              json_mode=True, return_model=True)
     cands = [c.strip() for c in fw.parse_json_block(raw).get("candidates", []) if c.strip()]
     if not cands:
         raise RuntimeError(f"stylist returned no candidates for {style}")
-    return cands
+    return cands, used
 
 
 def _firewall(style: str, candidates: list[str]) -> list[str]:
@@ -87,17 +92,24 @@ async def _judge(scene_json: str, style: str, candidates: list[str]) -> dict:
 
 
 async def caption_style(scene: dict, style: str, allow_refine: bool = True,
-                        temperature: float | None = None) -> dict:
+                        temperature: float | None = None,
+                        stylist_model: str | None = None,
+                        stylist_fallback: str | None = None) -> dict:
     """Best caption for one style, with the internal judge's scores attached.
 
     temperature overrides the per-style default (demo UI creativity slider);
-    the harness path never passes it, so leaderboard behaviour is unchanged.
+    stylist_model/stylist_fallback let the demo route generation to Gemma.
+    The harness path passes none of these, so leaderboard behaviour is unchanged.
+    The returned dict includes "model": the id that actually wrote the winner.
     """
     scene_json = json.dumps(scene, ensure_ascii=False)
     if fw.SKIP_API:
-        return {"text": contracts.fallback_caption(scene, style), "accuracy": 0.0, "style": 0.0}
+        return {"text": contracts.fallback_caption(scene, style),
+                "accuracy": 0.0, "style": 0.0, "model": "skip"}
 
-    candidates = _firewall(style, await _generate(scene_json, style, temperature=temperature))
+    cands_raw, used_model = await _generate(scene_json, style, temperature=temperature,
+                                            model=stylist_model, fallback=stylist_fallback)
+    candidates = _firewall(style, cands_raw)
     verdict = await _judge(scene_json, style, candidates)
     scores = {s["i"]: s for s in verdict.get("scores", []) if isinstance(s, dict) and "i" in s}
     best_i = verdict.get("best", 0)
@@ -116,8 +128,10 @@ async def caption_style(scene: dict, style: str, allow_refine: bool = True,
                     scene_report=scene_json,
                     contract=contracts.STYLE_CONTRACTS[style], k=2)},
             ]
-            raw = await fw.chat(msgs, fw.STYLIST_MODEL, fw.STYLIST_FALLBACK,
-                                max_tokens=1200, temperature=0.9, json_mode=True)
+            raw, refine_used = await fw.chat(
+                msgs, stylist_model or fw.STYLIST_MODEL,
+                stylist_fallback if stylist_fallback is not None else fw.STYLIST_FALLBACK,
+                max_tokens=1200, temperature=0.9, json_mode=True, return_model=True)
             retry_cands = _firewall(style, [c.strip() for c in
                                             fw.parse_json_block(raw).get("candidates", []) if c.strip()])
             pool = [best] + retry_cands
@@ -128,10 +142,13 @@ async def caption_style(scene: dict, style: str, allow_refine: bool = True,
                 best = pool[b2]
                 acc = float(scores2.get(b2, {}).get("accuracy", acc))
                 sty = float(scores2.get(b2, {}).get("style", sty))
+                if b2 != 0:  # a refined candidate won — credit the model that wrote it
+                    used_model = refine_used
         except Exception as e:  # noqa: BLE001 — refinement is best-effort
             print(f"[pipeline] refine failed for {style}: {e}", file=sys.stderr)
 
-    return {"text": best, "accuracy": acc, "style": sty}
+    return {"text": best, "accuracy": acc, "style": sty,
+            "model": (used_model or "").split("/")[-1]}
 
 
 async def process_clip_verbose(task: dict) -> tuple[dict, dict]:

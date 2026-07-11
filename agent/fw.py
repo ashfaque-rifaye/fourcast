@@ -31,7 +31,8 @@ VISION_FALLBACK = os.getenv("T2_VISION_FALLBACK") or None
 # keeping Kimi vision + gpt-oss judge. GLM 5.2 stays the fallback, so if Gemma is
 # unavailable on the key the pipeline degrades gracefully instead of failing.
 USE_GEMMA = os.getenv("T2_USE_GEMMA") == "1"
-GEMMA_MODEL = os.getenv("T2_GEMMA_MODEL", "accounts/fireworks/models/gemma-4-31b-it")
+# Google DeepMind Gemma via Fireworks (for the "Best Use of Gemma" bonus).
+GEMMA_MODEL = os.getenv("T2_GEMMA_MODEL", "accounts/fireworks/models/gemma2-9b-it")
 
 STYLIST_MODEL = os.getenv("T2_STYLIST_MODEL") or (
     GEMMA_MODEL if USE_GEMMA else "accounts/fireworks/models/glm-5p2"
@@ -75,11 +76,14 @@ async def chat(
     temperature: float = 0.6,
     retries: int = 1,
     json_mode: bool = False,
-) -> str:
-    """One chat completion, with retry then model fallback. Returns content str.
+    return_model: bool = False,
+):
+    """One chat completion, with retry then model fallback.
 
-    json_mode uses Fireworks' response_format json_object; if a model rejects
-    it (400), the same model is retried without it before falling back.
+    Returns the content string, or (content, model_id) when return_model=True so
+    callers can honestly report which model actually produced the answer (e.g.
+    Gemma vs. the GLM fallback). json_mode uses Fireworks' response_format
+    json_object; if a model rejects it (400), it retries plain before falling back.
     """
     last_err: Exception | None = None
     for attempt_model in filter(None, [model, fallback_model]):
@@ -104,7 +108,7 @@ async def chat(
                 content = msg.get("content") or ""
                 if not content.strip():
                     raise RuntimeError(f"{attempt_model} returned empty content")
-                return content
+                return (content, attempt_model) if return_model else content
             except Exception as e:  # noqa: BLE001 — batch agent must never die on one call
                 last_err = e
                 print(f"[fw] {type(e).__name__} on {attempt_model} (try {attempt}): {e}", file=sys.stderr)

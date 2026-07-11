@@ -242,6 +242,14 @@ input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;
 .dropdown div{padding:7px 11px;border-radius:8px;font-size:12.5px;color:var(--text);cursor:pointer}
 .dropdown div:hover{background:var(--glass2);color:var(--accent2)}
 .meta-line{margin-top:10px;font:10.5px var(--mono);color:var(--dim);opacity:.7}
+.modelbadge{display:none;align-items:center;gap:5px;font:9.5px var(--mono);letter-spacing:.5px;text-transform:uppercase;
+  border-radius:999px;padding:3px 9px;margin-left:8px;border:1px solid var(--line);color:var(--dim)}
+.modelbadge.on{display:inline-flex}
+.modelbadge .d{width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor}
+.modelbadge.gemma{color:#fff;border-color:transparent;background:linear-gradient(90deg,var(--violet),var(--cyan));
+  box-shadow:0 0 16px rgba(139,92,246,.5)}
+.modelbadge.glm{color:var(--accent2);border-color:rgba(255,157,92,.45);background:rgba(255,157,92,.10)}
+.gemma-pill{background:linear-gradient(90deg,rgba(139,92,246,.9),rgba(34,211,238,.85))!important;color:#fff!important;border-color:transparent!important}
 .skel{background:linear-gradient(90deg,var(--glass) 25%,var(--glass2) 50%,var(--glass) 75%);background-size:200% 100%;
   animation:sh 1.3s infinite;border-radius:7px;height:15px;margin:8px 0}
 @keyframes sh{to{background-position:-200% 0}}
@@ -459,6 +467,9 @@ footer{margin-top:40px;color:var(--dim);font-size:12.5px;display:flex;gap:16px;f
         <div class="slider-ends"><span>Conservative · stays close to the scene</span><span>Highly creative</span></div>
         <div class="togglerow"><span>AI content pack <span style="color:var(--dim)">(titles · hashtags · SEO · scores)</span></span>
           <label class="switch"><input type="checkbox" id="packToggle" checked><i></i></label></div>
+        <div class="togglerow"><span>Write captions with <b style="background:linear-gradient(90deg,var(--violet),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent">Gemma</b>
+          <span style="color:var(--dim)" id="gemmaHint">(Best-Use-of-Gemma bonus)</span></span>
+          <label class="switch"><input type="checkbox" id="gemmaToggle"><i></i></label></div>
         <div class="togglerow"><span>The four track styles <span style="color:var(--dim)">(always on — it's the contract)</span></span>
           <label class="switch"><input type="checkbox" checked disabled><i></i></label></div>
       </div>
@@ -644,6 +655,7 @@ $('url').addEventListener('input',e=>{const k=detect(e.target.value);
 
 /* ================================================================= examples */
 const EX_META={"Autumn boulevard":["leaf","urban · leaves · traffic"],"Garden kitten":["paw","animal · close-up"],"Office worker":["briefcase","people · workspace"]};
+fetch('/api/config').then(r=>r.json()).then(c=>{S.cfg=c;const h=$('gemmaHint');if(h)h.textContent='('+c.gemma_model+' · bonus)';}).catch(()=>{});
 fetch('/api/examples').then(r=>r.json()).then(ex=>{
   $('examples').innerHTML='';
   Object.entries(ex).forEach(([name,u])=>{
@@ -760,7 +772,7 @@ function ringSVG(pct,label){const r=14,c=2*Math.PI*r,off=c*(1-pct);
     <span class="val">${label}</span></div>`;}
 function cardShell(style){const [nm,ico]=STYLES[style];
   return `<div class="card ${style}" id="card-${style}">
-    <h3><span class="tico" style="color:var(--ac)">${ICON(ico,15)}</span><span class="nm">${nm}</span><span class="rings" id="rings-${style}"></span></h3>
+    <h3><span class="tico" style="color:var(--ac)">${ICON(ico,15)}</span><span class="nm">${nm}</span><span class="modelbadge" id="mb-${style}"></span><span class="rings" id="rings-${style}"></span></h3>
     <div class="skel" style="width:94%"></div><div class="skel" style="width:70%"></div>
     <div class="meta-line">The stylist is writing three candidates…</div>
   </div>`;}
@@ -818,6 +830,12 @@ function fillCard(style,d,animate=true){
   else{j.classList.remove('on');}
   const ml=c.querySelector('.meta-line');
   ml.textContent=`Judge · ${(d.accuracy??0).toFixed(2)} accuracy · ${(d.style??0).toFixed(2)} style`+(d.elapsed_s?` · ${d.elapsed_s}s`:'');
+  const mb=$('mb-'+style);
+  if(mb){const mdl=(d.model||'').toLowerCase();
+    if(d.model&&!['skip','fallback',''].includes(mdl)){
+      mb.className='modelbadge on '+(mdl.includes('gemma')?'gemma':mdl.includes('glm')?'glm':'');
+      mb.innerHTML=`<span class="d"></span>${d.model}`;
+    }else{mb.className='modelbadge';mb.innerHTML='';}}
 }
 function pushUndo(style){(S.undo[style]=S.undo[style]||[]).push(S.captions[style]?.text||'');
   if(S.undo[style].length>25)S.undo[style].shift();}
@@ -852,7 +870,8 @@ function run(){
   buildStages();buildGrid();startFlavor();
   $('runBtn').disabled=true;
   $('pipeline').scrollIntoView({behavior:'smooth',block:'center'});
-  const q=new URLSearchParams({src:S.src,creativity:$('creativity').value,pack:$('packToggle').checked?1:0});
+  const q=new URLSearchParams({src:S.src,creativity:$('creativity').value,pack:$('packToggle').checked?1:0,gemma:$('gemmaToggle').checked?1:0});
+  S.gemmaReq=$('gemmaToggle').checked;
   es=new EventSource('/api/stream?'+q);
   es.addEventListener('stage',e=>{const d=JSON.parse(e.data);
     setStage(d.id,d.state,d.count?d.count+' frames':d.model||'');
@@ -887,11 +906,16 @@ function finish(failed){
   if(failed)return;
   $('exports').classList.add('on');
   const m=S.models||{};
+  const usedGemma=(m.stylist||'').toLowerCase().includes('gemma');
   $('footer').innerHTML=`<span>Vision <span class="kbd">${m.vision||'?'}</span></span>
-    <span>Stylist <span class="kbd">${m.stylist||'?'}</span></span>
+    <span>Stylist <span class="kbd ${usedGemma?'gemma-pill':''}">${m.stylist||'?'}</span></span>
     <span>Judge <span class="kbd">${m.judge||'?'}</span></span>
     <span>${S.elapsed||'?'}s wall-clock</span>
     <span style="margin-left:auto">FourCast — The Caption Factory · AMD ACT II</span>`;
+  if(S.gemmaReq){
+    if(usedGemma)toast('✨ Captions written by Gemma');
+    else toast('Gemma unavailable on this key — used '+(m.stylist||'GLM')+' instead',true);
+  }
   confettiPulse();
 }
 function confettiPulse(){document.querySelectorAll('.card').forEach((c,i)=>{
@@ -905,7 +929,7 @@ async function regen(style){
   const cap=$('card-'+style).querySelector('.cap-text');cap.classList.add('busy');
   try{
     const r=await fetch('/api/restyle',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({scene:S.scene,style,creativity:+$('creativity').value})});
+      body:JSON.stringify({scene:S.scene,style,creativity:+$('creativity').value,gemma:$('gemmaToggle').checked})});
     const d=await r.json();fillCard(style,d);toast('Regenerated — judge re-scored it');
   }catch(e){toast('Regenerate failed',true);cap.classList.remove('busy');}
 }

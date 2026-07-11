@@ -188,6 +188,7 @@ class RestyleRequest(BaseModel):
     scene: dict
     style: str
     creativity: int | None = None  # 0-100 slider
+    gemma: bool | None = None      # route this regenerate through Gemma
 
 
 class RewriteRequest(BaseModel):
@@ -304,9 +305,27 @@ async def _perceive_frames(frames: list[tuple[str, bytes]]) -> dict:
     return fw.parse_json_block(raw)
 
 
+@app.get("/api/config")
+def api_config() -> dict:
+    """Models the UI labels/badges — kept truthful and in one place."""
+    return {
+        "vision": fw.VISION_MODEL.split("/")[-1],
+        "default_stylist": fw.STYLIST_MODEL.split("/")[-1],
+        "gemma_model": fw.GEMMA_MODEL.split("/")[-1],
+        "judge": fw.JUDGE_MODEL.split("/")[-1],
+    }
+
+
 @app.get("/api/stream")
-async def api_stream(src: str, creativity: int | None = None, pack: int = 1):
-    """The real pipeline as Server-Sent Events — every stage the UI animates is real."""
+async def api_stream(src: str, creativity: int | None = None, pack: int = 1, gemma: int = 0):
+    """The real pipeline as Server-Sent Events — every stage the UI animates is real.
+
+    gemma=1 routes caption generation (the stylist step only) to Gemma on
+    Fireworks for the bonus, keeping Kimi vision + gpt-oss judge; GLM 5.2 stays
+    the automatic fallback and each caption reports the model that actually wrote it.
+    """
+    gemma_stylist = fw.GEMMA_MODEL if gemma else None
+    gemma_fallback = "accounts/fireworks/models/glm-5p2" if gemma else None
 
     async def gen():
         t0 = time.perf_counter()
@@ -333,17 +352,20 @@ async def api_stream(src: str, creativity: int | None = None, pack: int = 1):
             yield _sse("stage", {"id": "vision", "state": "done"})
 
             yield _sse("stage", {"id": "styling", "state": "active",
-                                 "model": fw.STYLIST_MODEL.split("/")[-1]})
+                                 "model": (fw.GEMMA_MODEL if gemma else fw.STYLIST_MODEL).split("/")[-1],
+                                 "gemma": bool(gemma)})
 
             async def one(style: str):
                 st = time.perf_counter()
                 try:
                     d = await caption_style(scene, style,
-                                            temperature=slider_temp(style, creativity))
+                                            temperature=slider_temp(style, creativity),
+                                            stylist_model=gemma_stylist,
+                                            stylist_fallback=gemma_fallback)
                 except Exception as e:  # noqa: BLE001
                     print(f"[studio] {style} fell back: {e}", file=sys.stderr)
                     d = {"text": contracts.fallback_caption(scene, style),
-                         "accuracy": 0.0, "style": 0.0}
+                         "accuracy": 0.0, "style": 0.0, "model": "fallback"}
                 d["jargon"] = (contracts.jargon_violations(d.get("text", ""))
                                if style == "humorous_non_tech" else [])
                 d["elapsed_s"] = round(time.perf_counter() - st, 1)
@@ -367,10 +389,13 @@ async def api_stream(src: str, creativity: int | None = None, pack: int = 1):
                     print(f"[studio] content pack failed: {e}", file=sys.stderr)
                 yield _sse("stage", {"id": "pack", "state": "done"})
 
+            used = sorted({v.get("model") for v in captions.values()
+                           if v.get("model") and v.get("model") not in ("skip", "fallback")})
             yield _sse("done", {
                 "elapsed_s": round(time.perf_counter() - t0, 1),
+                "gemma_requested": bool(gemma),
                 "models": {"vision": fw.VISION_MODEL.split("/")[-1],
-                           "stylist": fw.STYLIST_MODEL.split("/")[-1],
+                           "stylist": ", ".join(used) or fw.STYLIST_MODEL.split("/")[-1],
                            "judge": fw.JUDGE_MODEL.split("/")[-1]},
             })
         except Exception as e:  # noqa: BLE001
@@ -402,7 +427,10 @@ async def api_restyle(req: RestyleRequest) -> dict:
     if req.style not in contracts.STYLES:
         return {"text": "", "accuracy": 0.0, "style": 0.0}
     d = await asyncio.wait_for(
-        caption_style(req.scene, req.style, temperature=slider_temp(req.style, req.creativity)),
+        caption_style(req.scene, req.style,
+                      temperature=slider_temp(req.style, req.creativity),
+                      stylist_model=(fw.GEMMA_MODEL if req.gemma else None),
+                      stylist_fallback=("accounts/fireworks/models/glm-5p2" if req.gemma else None)),
         timeout=90)
     d["jargon"] = contracts.jargon_violations(d["text"]) if req.style == "humorous_non_tech" else []
     return d
