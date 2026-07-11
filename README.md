@@ -167,7 +167,8 @@ A full `results.json` for the three example clips lives in [`out/`](out/).
 | **Vision / perceiver** | Kimi K2.6 (fallback Kimi K2.5) |
 | **Stylist** | GLM 5.2 (fallback Kimi K2.6) |
 | **Judge** | gpt-oss-120b (fallback GLM 5.1) |
-| **Inference** | [Fireworks AI](https://fireworks.ai/) — serverless models hosted on **AMD** hardware |
+| **Inference** | [Fireworks AI](https://fireworks.ai/) — serverless models served on **AMD Instinct** GPUs |
+| **Demo hosting** | **Google Cloud Run** (container-native; the UI header shows this live) |
 | **Runtime** | Python 3.12 · asyncio · FastAPI · httpx |
 | **Media** | ffmpeg (remote-seek frame extraction, no full download) |
 | **Ship** | Docker (`linux/amd64`) · GitHub Actions → GHCR |
@@ -198,7 +199,7 @@ SUBMISSION.md         lablab.ai submission copy + video script
 
 ## Roadmap
 
-- ✅ **Gemma track eligibility** — opt-in Gemma stylist path (`T2_USE_GEMMA=1`) to compete for the *Best Use of Gemma in Video Captioning* bonus, keeping Kimi vision + gpt-oss judge with GLM 5.2 as fallback. *Requires a Fireworks key with Gemma access; without it the pipeline transparently falls back to GLM 5.2.*
+- ⏳ **Gemma track eligibility** — stylist can route to a Gemma model via `AMD_VLLM_BASE_URL` (self-hosted on an AMD MI300X) to compete for the *Best Use of Gemma in Video Captioning* bonus, keeping Kimi vision + gpt-oss judge with GLM 5.2 as fallback. (Gemma is not exposed on our Fireworks key, so the AMD Developer Cloud route is required.) *Requires a Fireworks key with Gemma access; without it the pipeline transparently falls back to GLM 5.2.*
 - ✅ **Per-style temperature** — cool/precise for `formal`, warmer for the humorous tones.
 - ✅ **Reliability-first budget control** — per-clip timeout + optional fast mode.
 - **Audio grounding** — optional Whisper pass so speech-driven clips (technology/people categories) ground on dialogue as well as frames.

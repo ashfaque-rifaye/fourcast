@@ -42,9 +42,17 @@ STYLIST_FALLBACK = os.getenv("T2_STYLIST_FALLBACK") or (
 JUDGE_MODEL = os.getenv("T2_JUDGE_MODEL", "accounts/fireworks/models/gpt-oss-120b")
 JUDGE_FALLBACK = os.getenv("T2_JUDGE_FALLBACK", "accounts/fireworks/models/glm-5p1")
 
+# --- Gemma on AMD Developer Cloud (self-hosted, for the "Best Use of Gemma" bonus) ---
+# Fireworks serverless does not expose Gemma on every key, so the reliable Gemma
+# route is a vLLM server on an AMD Instinct MI300X (ROCm). Point the stylist at it
+# by setting AMD_VLLM_BASE_URL; GLM 5.2 on Fireworks stays the automatic fallback.
+AMD_VLLM_BASE_URL = os.getenv("AMD_VLLM_BASE_URL") or None
+AMD_VLLM_MODEL = os.getenv("AMD_VLLM_MODEL", "google/gemma-3-27b-it")
+AMD_VLLM_KEY = os.getenv("AMD_VLLM_KEY", "EMPTY")
+
 SKIP_API = os.getenv("SKIP_API") == "1"
 
-_client: httpx.AsyncClient | None = None
+_clients: dict[str, httpx.AsyncClient] = {}
 
 
 def _api_key() -> str:
@@ -56,15 +64,16 @@ def _api_key() -> str:
     return key
 
 
-def client() -> httpx.AsyncClient:
-    global _client
-    if _client is None:
-        _client = httpx.AsyncClient(
-            base_url=BASE_URL,
-            headers={"Authorization": f"Bearer {_api_key()}"},
+def client(base_url: str | None = None, api_key: str | None = None) -> httpx.AsyncClient:
+    """Cached client per endpoint — Fireworks by default, or a self-hosted vLLM."""
+    base = base_url or BASE_URL
+    if base not in _clients:
+        _clients[base] = httpx.AsyncClient(
+            base_url=base,
+            headers={"Authorization": f"Bearer {api_key or _api_key()}"},
             timeout=httpx.Timeout(75.0, connect=15.0),
         )
-    return _client
+    return _clients[base]
 
 
 async def chat(
@@ -75,6 +84,8 @@ async def chat(
     temperature: float = 0.6,
     retries: int = 1,
     json_mode: bool = False,
+    base_url: str | None = None,
+    api_key: str | None = None,
 ) -> str:
     """One chat completion, with retry then model fallback. Returns content str.
 
@@ -94,7 +105,7 @@ async def chat(
                 }
                 if use_json:
                     payload["response_format"] = {"type": "json_object"}
-                r = await client().post("/chat/completions", json=payload)
+                r = await client(base_url, api_key).post("/chat/completions", json=payload)
                 if r.status_code == 400 and use_json:
                     use_json = False  # model rejects response_format — retry plain
                     raise RuntimeError(f"{attempt_model} rejected json_mode: {r.text[:120]}")
@@ -157,7 +168,6 @@ def parse_json_block(text: str) -> dict:
 
 
 async def aclose() -> None:
-    global _client
-    if _client is not None:
-        await _client.aclose()
-        _client = None
+    for c in list(_clients.values()):
+        await c.aclose()
+    _clients.clear()

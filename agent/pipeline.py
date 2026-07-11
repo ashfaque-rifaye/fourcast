@@ -46,6 +46,20 @@ async def perceive(url: str) -> dict:
     return fw.parse_json_block(raw)
 
 
+async def _stylist_chat(msgs: list[dict], max_tokens: int, temperature: float) -> str:
+    """Stylist call. Prefers self-hosted Gemma on AMD (AMD_VLLM_BASE_URL set) for the
+    Gemma bonus; otherwise GLM 5.2 on Fireworks. Always falls back to Fireworks."""
+    if fw.AMD_VLLM_BASE_URL:
+        try:
+            return await fw.chat(msgs, fw.AMD_VLLM_MODEL, None, max_tokens=max_tokens,
+                                 temperature=temperature, json_mode=True,
+                                 base_url=fw.AMD_VLLM_BASE_URL, api_key=fw.AMD_VLLM_KEY)
+        except Exception as e:  # noqa: BLE001
+            print(f"[pipeline] AMD-vLLM Gemma stylist failed -> Fireworks GLM: {e}", file=sys.stderr)
+    return await fw.chat(msgs, fw.STYLIST_MODEL, fw.STYLIST_FALLBACK,
+                         max_tokens=max_tokens, temperature=temperature, json_mode=True)
+
+
 async def _generate(scene_json: str, style: str, k: int = 3,
                     temperature: float | None = None) -> list[str]:
     msgs = [
@@ -54,11 +68,8 @@ async def _generate(scene_json: str, style: str, k: int = 3,
             scene_report=scene_json, k=k, style_name=style,
             contract=contracts.STYLE_CONTRACTS[style])},
     ]
-    raw = await fw.chat(msgs, fw.STYLIST_MODEL, fw.STYLIST_FALLBACK,
-                        max_tokens=1600,
-                        temperature=temperature if temperature is not None
-                        else STYLE_TEMPS.get(style, 0.9),
-                        json_mode=True)
+    raw = await _stylist_chat(msgs, 1600,
+                              temperature if temperature is not None else STYLE_TEMPS.get(style, 0.9))
     cands = [c.strip() for c in fw.parse_json_block(raw).get("candidates", []) if c.strip()]
     if not cands:
         raise RuntimeError(f"stylist returned no candidates for {style}")
@@ -116,8 +127,7 @@ async def caption_style(scene: dict, style: str, allow_refine: bool = True,
                     scene_report=scene_json,
                     contract=contracts.STYLE_CONTRACTS[style], k=2)},
             ]
-            raw = await fw.chat(msgs, fw.STYLIST_MODEL, fw.STYLIST_FALLBACK,
-                                max_tokens=1200, temperature=0.9, json_mode=True)
+            raw = await _stylist_chat(msgs, 1200, 0.9)
             retry_cands = _firewall(style, [c.strip() for c in
                                             fw.parse_json_block(raw).get("candidates", []) if c.strip()])
             pool = [best] + retry_cands
