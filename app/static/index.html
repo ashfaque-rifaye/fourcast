@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FourCast Studio — four voices for every video</title>
-<meta name="description" content="AI video captioning studio: one clip in, four judged voices out. AMD ACT II · Track 2.">
+<title>FourCast — The Caption Factory</title>
+<meta name="description" content="AI-powered caption generation built for creators, marketers, and storytellers. One clip in, four judged voices out. AMD ACT II · Track 2.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -168,7 +168,11 @@ input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;
 .pipeline{display:none;margin-top:26px}
 .pipeline.on{display:block}
 .stages{display:flex;gap:0;align-items:flex-start;justify-content:space-between;position:relative;margin:6px 8px 4px}
-.stages:before{content:"";position:absolute;top:21px;left:6%;right:6%;height:2px;background:var(--line);z-index:0}
+.stages:before{content:"";position:absolute;top:21px;left:6%;right:6%;height:2px;z-index:0;border-radius:2px;
+  background:linear-gradient(90deg,var(--line) 0 40%,rgba(255,92,26,.65) 50%,var(--line) 60% 100%);
+  background-size:280% 100%;animation:flow 2.6s linear infinite}
+@keyframes flow{from{background-position:120% 0}to{background-position:-160% 0}}
+.stages.settled:before{animation:none;background:var(--line)}
 .stage{flex:1;text-align:center;position:relative;z-index:1}
 .stage .node{width:42px;height:42px;margin:0 auto;border-radius:50%;display:grid;place-items:center;font-size:17px;
   background:var(--bg2);border:2px solid var(--line2);transition:.35s;color:var(--dim)}
@@ -289,6 +293,96 @@ footer{margin-top:40px;color:var(--dim);font-size:12.5px;display:flex;gap:16px;f
 .toast.err{border-color:rgba(248,113,113,.5)}
 .hide{display:none!important}
 
+/* ============================================================ icons */
+.ic{width:1em;height:1em;display:inline-block;vertical-align:-.14em;flex:none}
+.node .ic{width:17px;height:17px;vertical-align:middle}
+.tool .ic,.btn .ic{margin-right:2px}
+
+/* ============================================================ polish: motion & light */
+.reveal{opacity:0;transform:translateY(18px)}
+.reveal.inview{opacity:1;transform:none;transition:opacity .7s ease,transform .7s cubic-bezier(.2,.8,.2,1)}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none}}
+.card,.panel{background-image:radial-gradient(560px circle at var(--mx,50%) var(--my,-20%),rgba(255,255,255,.045),transparent 45%)}
+.card{will-change:transform;transform-style:preserve-3d}
+.btn{overflow:hidden}
+.rip{position:absolute;border-radius:50%;background:rgba(255,255,255,.45);transform:scale(0);
+  animation:rip .55s ease-out forwards;pointer-events:none}
+@keyframes rip{to{transform:scale(3.4);opacity:0}}
+.drop{position:relative;isolation:isolate}
+.drop:before{content:"";position:absolute;inset:-1.5px;border-radius:17px;padding:1.5px;z-index:-1;opacity:0;transition:.35s;
+  background:conic-gradient(from var(--ang,0deg),var(--accent),var(--violet),var(--cyan),var(--accent));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
+  animation:spin-border 4s linear infinite}
+.drop:hover:before,.drop.over:before{opacity:1}
+@property --ang{syntax:"<angle>";initial-value:0deg;inherits:false}
+@keyframes spin-border{to{--ang:360deg}}
+.drop.over{transform:scale(1.012)}
+.ex .ico{color:#fff;transition:.3s}
+.ex:hover .ico{transform:translateY(-2px) scale(1.06)}
+.meta{animation:pop .45s cubic-bezier(.2,.9,.3,1.3) both;transition:.2s}
+.meta:hover{border-color:var(--line2);transform:translateY(-2px);box-shadow:0 10px 26px rgba(0,0,0,.3)}
+.meta .k{display:flex;align-items:center;gap:6px}
+.probestat{display:none;margin-top:12px;font:12px var(--mono);color:var(--dim);align-items:center;gap:9px}
+.probestat.on{display:flex;animation:rise .3s ease both}
+.probestat .dotp{width:7px;height:7px;border-radius:50%;background:var(--cyan);animation:pulse-dot 1s ease infinite}
+@keyframes pulse-dot{50%{opacity:.25;transform:scale(.7)}}
+
+/* ============================================================ polish: cinematic player */
+.playerwrap{position:relative;isolation:isolate}
+.playerwrap:before{content:"";position:absolute;inset:-22px;z-index:-1;border-radius:36px;
+  background-image:var(--pimg);background-size:cover;background-position:center;
+  filter:blur(46px) saturate(1.5);opacity:0;transition:opacity 1.2s ease}
+.playerwrap.lit:before{opacity:.38}
+.player{transition:box-shadow .5s ease}
+.player.scanning{box-shadow:0 24px 70px rgba(0,0,0,.55),0 0 44px rgba(34,211,238,.22)}
+.player.scanning:after{content:"";position:absolute;left:0;right:0;height:34%;z-index:2;pointer-events:none;
+  background:linear-gradient(180deg,transparent,rgba(34,211,238,.14) 45%,rgba(34,211,238,.28) 50%,rgba(34,211,238,.14) 55%,transparent);
+  animation:scan 2.4s cubic-bezier(.4,0,.6,1) infinite}
+@keyframes scan{from{top:-34%}to{top:100%}}
+.markers{position:relative;height:22px;margin-top:10px;border-radius:8px;background:var(--glass2);
+  border:1px solid var(--line);display:none}
+.markers.on{display:block}
+.markers .mk{position:absolute;top:3px;bottom:3px;width:3px;border-radius:2px;background:linear-gradient(180deg,var(--cyan),var(--violet));
+  animation:pop .5s ease both;cursor:pointer}
+.markers .mk:hover{box-shadow:0 0 10px var(--cyan)}
+.markers .mlbl{position:absolute;right:8px;top:2.5px;font:9.5px var(--mono);color:var(--dim);letter-spacing:.6px;text-transform:uppercase}
+
+/* ============================================================ polish: pipeline life */
+.stage .node{position:relative}
+.stage.done .node:after{content:"";position:absolute;inset:-3px;border-radius:50%;
+  border:2px solid var(--good);opacity:0;animation:ringout .8s ease-out}
+@keyframes ringout{from{opacity:.9;transform:scale(.7)}to{opacity:0;transform:scale(1.7)}}
+.pipe-badges{display:flex;gap:8px;margin-left:auto;text-transform:none;letter-spacing:.2px}
+.pipe-badges span{font:10.5px var(--mono);color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+.pipe-badges .live{color:var(--good);border-color:rgba(52,211,153,.35)}
+.pipe-badges .live i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--good);
+  margin-right:5px;animation:pulse-dot 1.3s ease infinite}
+
+/* ============================================================ polish: caption card metrics */
+.mrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.mchip{display:inline-flex;align-items:center;gap:5px;font:10.5px var(--mono);color:var(--dim);
+  background:var(--glass2);border:1px solid var(--line);border-radius:999px;padding:3px 10px;transition:.2s}
+.mchip:hover{color:var(--text);border-color:var(--ac,var(--line2))}
+.tool.fav.on{color:var(--warn);border-color:var(--warn)}
+.pcard{transition:.3s}
+.pcard:hover{transform:translateY(-2px);border-color:var(--line2);box-shadow:0 14px 40px rgba(0,0,0,.3)}
+
+/* ============================================================ polish: site footer */
+.sitefoot{margin-top:64px;border-top:1px solid var(--line);padding-top:34px}
+.sitefoot .cols{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:26px}
+@media(max-width:760px){.sitefoot .cols{grid-template-columns:1fr 1fr}}
+.sitefoot h5{font-size:10.5px;text-transform:uppercase;letter-spacing:1.8px;color:var(--dim);margin-bottom:12px}
+.sitefoot .fbrand{font-weight:800;font-size:16px;margin-bottom:6px}
+.sitefoot .fbrand b{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sitefoot p,.sitefoot a{font-size:12.5px;color:var(--dim);text-decoration:none;display:block;margin-bottom:7px;transition:.18s}
+.sitefoot a:hover{color:var(--text);transform:translateX(2px)}
+.sitefoot .modelchips{display:flex;gap:6px;flex-wrap:wrap}
+.statusrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:26px;padding:14px 0 6px;
+  border-top:1px solid var(--line);font-size:11.5px;color:var(--dim)}
+.statusrow .dot{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 10px var(--good);
+  animation:pulse-dot 1.6s ease infinite}
+.statusrow .sp{margin-left:auto}
+
 /* ---- small screens (keep last: must win the cascade) ---- */
 @media(max-width:520px){
   .srctag{display:none}
@@ -308,13 +402,13 @@ footer{margin-top:40px;color:var(--dim);font-size:12.5px;display:flex;gap:16px;f
 <header class="nav">
   <div class="brand">
     <div class="logo">4</div>
-    <div><div class="wordmark">Four<b>Cast</b> Studio</div><div class="tagline">four voices for every video</div></div>
+    <div><div class="wordmark">Four<b>Cast</b></div><div class="tagline">The Caption Factory</div></div>
   </div>
   <div class="navpills">
     <span class="pill hot">AMD ACT II · Track 2</span>
     <span class="pill">team mindflayer</span>
     <span class="pill">Fireworks AI</span>
-    <button class="iconbtn" id="themeBtn" title="Theme (T)">◐</button>
+    <button class="iconbtn" id="themeBtn" title="Theme (T)"><i data-ic="moon"></i></button>
   </div>
 </header>
 
@@ -322,9 +416,9 @@ footer{margin-top:40px;color:var(--dim);font-size:12.5px;display:flex;gap:16px;f
 
   <section class="hero" id="hero">
     <h1>One clip in.<br><span class="grad">Every voice out.</span></h1>
-    <p>Drop any video and watch it get grounded into a scene report, then written in four judged tones —
-       formal, sarcastic, humorous-tech and humorous-non-tech — each caption beating two rivals in front of
-       an in-house judge before you ever see it.</p>
+    <p>AI-powered caption generation built for creators, marketers, and storytellers.
+       Every clip is grounded into a scene report, then written in four judged voices —
+       each caption beating two rivals in front of an in-house judge before you ever see it.</p>
     <div class="kbdhint">Drop a file anywhere · <span class="kbd">Enter</span> analyze · <span class="kbd">G</span> generate · <span class="kbd">T</span> theme</div>
   </section>
 
@@ -339,7 +433,8 @@ footer{margin-top:40px;color:var(--dim);font-size:12.5px;display:flex;gap:16px;f
       </div>
       <button class="btn" id="analyzeBtn">Analyze</button>
     </div>
-    <div class="drop" id="drop">📼 &nbsp;Drag &amp; drop a video here — or <b>browse your computer</b></div>
+    <div class="probestat" id="probeStat"><span class="dotp"></span><span id="probeStatTxt"></span></div>
+    <div class="drop" id="drop"><i data-ic="upload"></i> &nbsp;Drag &amp; drop a video here — or <b>browse your computer</b></div>
     <input type="file" id="file" accept="video/*" class="hide">
     <div class="sources">
       <span>▶ YouTube</span><span>♪ TikTok</span><span>◎ Instagram</span><span>𝕏 Twitter</span>
@@ -349,7 +444,10 @@ footer{margin-top:40px;color:var(--dim);font-size:12.5px;display:flex;gap:16px;f
 
   <section class="preview" id="preview">
     <div>
-      <div class="player" id="player"><video id="video" controls muted playsinline></video></div>
+      <div class="playerwrap" id="playerwrap">
+        <div class="player" id="player"><video id="video" controls muted playsinline></video></div>
+      </div>
+      <div class="markers" id="markers"><span class="mlbl">sampled frames</span></div>
       <div class="metagrid" id="metagrid"></div>
       <div class="valid" id="valid"></div>
     </div>
@@ -372,7 +470,9 @@ footer{margin-top:40px;color:var(--dim);font-size:12.5px;display:flex;gap:16px;f
   </section>
 
   <section class="pipeline panel" id="pipeline">
-    <div class="sec-title">Live pipeline — every stage below is really happening</div>
+    <div class="sec-title">Live Pipeline — Every Stage Is Real
+      <span class="pipe-badges"><span class="live"><i></i>Live Inference</span><span>Fireworks AI · AMD-hosted</span></span>
+    </div>
     <div class="stages" id="stages"></div>
     <div class="liveline" id="liveline"></div>
     <div class="filmstrip" id="filmstrip"></div>
@@ -387,17 +487,17 @@ footer{margin-top:40px;color:var(--dim);font-size:12.5px;display:flex;gap:16px;f
   <div class="grid" id="grid"></div>
 
   <div class="exports" id="exports">
-    <button class="btn ghost" data-x="json">⬇ results.json</button>
-    <button class="btn ghost" data-x="txt">⬇ .txt</button>
-    <button class="btn ghost" data-x="md">⬇ .md</button>
-    <button class="btn ghost" data-x="srt">⬇ .srt</button>
-    <button class="btn ghost" data-x="vtt">⬇ .vtt</button>
+    <button class="btn ghost" data-x="json"><i data-ic="download"></i> results.json</button>
+    <button class="btn ghost" data-x="txt"><i data-ic="download"></i> .txt</button>
+    <button class="btn ghost" data-x="md"><i data-ic="download"></i> .md</button>
+    <button class="btn ghost" data-x="srt"><i data-ic="download"></i> .srt</button>
+    <button class="btn ghost" data-x="vtt"><i data-ic="download"></i> .vtt</button>
     <select id="subStyle" title="style used for SRT/VTT">
-      <option value="formal">subtitles: formal</option><option value="sarcastic">subtitles: sarcastic</option>
-      <option value="humorous_tech">subtitles: humorous-tech</option><option value="humorous_non_tech">subtitles: humorous-non-tech</option>
+      <option value="formal">Subtitles: Formal</option><option value="sarcastic">Subtitles: Sarcastic</option>
+      <option value="humorous_tech">Subtitles: Humorous · Tech</option><option value="humorous_non_tech">Subtitles: Humorous · Non-tech</option>
     </select>
-    <button class="btn ghost" data-x="copyall">⧉ Copy all</button>
-    <button class="btn ghost" id="rerunBtn">↻ Re-run</button>
+    <button class="btn ghost" data-x="copyall"><i data-ic="copy"></i> Copy All</button>
+    <button class="btn ghost" id="rerunBtn"><i data-ic="refresh"></i> Re-run</button>
   </div>
 
   <section class="pack" id="pack">
@@ -421,16 +521,87 @@ footer{margin-top:40px;color:var(--dim);font-size:12.5px;display:flex;gap:16px;f
   </section>
 
   <footer id="footer"></footer>
+
+  <footer class="sitefoot">
+    <div class="cols">
+      <div>
+        <div class="fbrand">Four<b>Cast</b> — The Caption Factory</div>
+        <p>AI-powered caption generation built for creators, marketers, and storytellers.
+           One clip in, four judged voices out.</p>
+        <div class="modelchips">
+          <span class="kbd">kimi-k2p6</span><span class="kbd">glm-5p2</span><span class="kbd">gpt-oss-120b</span>
+        </div>
+      </div>
+      <div>
+        <h5>Hackathon</h5>
+        <p>AMD Developer Hackathon · ACT II</p>
+        <p>Track 2 — Video Captioning</p>
+        <p>Team mindflayer</p>
+      </div>
+      <div>
+        <h5>Powered By</h5>
+        <p>Fireworks AI — AMD-hosted inference</p>
+        <p>ffmpeg remote-seek extraction</p>
+        <p>FastAPI · SSE streaming</p>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <a href="https://github.com/ashfaque-rifaye/fourcast" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/ashfaque-rifaye/fourcast#readme" target="_blank" rel="noopener">Documentation</a>
+        <a href="/health" target="_blank">API Status</a>
+      </div>
+    </div>
+    <div class="statusrow">
+      <span class="dot"></span><span>All systems live</span>
+      <span>·</span><span id="footVer">FourCast v2.1</span>
+      <span class="sp">© 2026 team mindflayer · MIT License</span>
+    </div>
+  </footer>
 </div>
 
 <div class="toast-zone" id="toasts"></div>
 
 <script>
+/* ================================================================= icons (inline SVG, one family) */
+const _P={
+  search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
+  film:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/>',
+  eye:'<path d="M2 12c3-6 17-6 20 0-3 6-17 6-20 0z"/><circle cx="12" cy="12" r="3"/>',
+  pen:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  box:'<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
+  copy:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>',
+  refresh:'<path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/>',
+  sparkle:'<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/>',
+  undo:'<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>',
+  download:'<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',
+  star:'<path d="M12 3l2.7 5.8 6.3.7-4.7 4.3 1.3 6.2L12 17l-5.6 3 1.3-6.2L3 9.5l6.3-.7z"/>',
+  briefcase:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/>',
+  smirk:'<circle cx="12" cy="12" r="9"/><path d="M8 15c2.5 1.6 5.5 1.2 7-.8"/><path d="M9 9.5h.01M15 9.5h.01"/>',
+  cpu:'<rect x="6" y="6" width="12" height="12" rx="2"/><rect x="10" y="10" width="4" height="4"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>',
+  coffee:'<path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M17 9h2a2.5 2.5 0 0 1 0 5h-2M7 3.5v2M11 3.5v2"/>',
+  upload:'<path d="M7 17a5 5 0 1 1 .9-9.9A6.5 6.5 0 0 1 20 9.5 4 4 0 0 1 19 17"/><path d="M12 12v8M8.5 15.5L12 12l3.5 3.5"/>',
+  moon:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+  check:'<path d="M20 6L9 17l-5-5"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  type:'<path d="M4 6h16M12 6v13"/>',
+  hash:'<path d="M4 9h16M4 15h16M10 3L8 21M16 3l-2 18"/>',
+  leaf:'<path d="M5 20C5 10 12 4 20 4c0 8-5 15-15 16z"/><path d="M5 20c3-6 7-9 11-11"/>',
+  paw:'<circle cx="8" cy="7.5" r="1.8"/><circle cx="16" cy="7.5" r="1.8"/><circle cx="4.8" cy="12" r="1.7"/><circle cx="19.2" cy="12" r="1.7"/><path d="M12 11c3 0 5.5 2.4 5.5 5 0 2-1.5 3.5-3.3 3.5-.9 0-1.5-.4-2.2-.4s-1.3.4-2.2.4c-1.8 0-3.3-1.5-3.3-3.5 0-2.6 2.5-5 5.5-5z"/>',
+  video:'<rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10.5l6-3.5v10l-6-3.5"/>',
+  ratio:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 15v-3h3"/>',
+  gauge:'<path d="M4 15a8 8 0 1 1 16 0"/><path d="M12 15l3.5-4"/><circle cx="12" cy="15" r="1.4"/>',
+  audio:'<path d="M4 10v4h4l5 4V6l-5 4z"/><path d="M16.5 9a4.5 4.5 0 0 1 0 6"/>',
+  codec:'<path d="M8 9l-4 3 4 3M16 9l4 3-4 3M13 5l-2 14"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"/>',
+};
+const ICON=(n,s)=>`<svg class="ic" ${s?`style="width:${s}px;height:${s}px"`:''} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${_P[n]||''}</svg>`;
+
 /* ================================================================= state */
 const $=id=>document.getElementById(id);
-const S={src:null,playback:null,probe:null,scene:null,captions:{},pack:null,models:null,elapsed:null,running:false,undo:{}};
-const STYLES={formal:["Formal","🏛"],sarcastic:["Sarcastic","🙄"],humorous_tech:["Humorous · Tech","🤖"],humorous_non_tech:["Humorous · Non-tech","🥐"]};
-const STAGES=[["probe","🔍","Probe"],["frames","🎞","Frames"],["vision","👁","Vision"],["styling","✒️","4 Voices"],["pack","📦","Pack"]];
+const S={src:null,playback:null,probe:null,scene:null,captions:{},pack:null,models:null,elapsed:null,running:false,undo:{},frameTs:[]};
+const STYLES={formal:["Formal","briefcase"],sarcastic:["Sarcastic","smirk"],humorous_tech:["Humorous · Tech","cpu"],humorous_non_tech:["Humorous · Non-tech","coffee"]};
+const STAGES=[["probe","search","Source Probe"],["frames","film","Frame Extraction"],["vision","eye","Vision Analysis"],["styling","pen","Caption Generation"],["pack","box","AI Packaging"]];
+document.querySelectorAll('[data-ic]').forEach(e=>{e.outerHTML=ICON(e.dataset.ic,e.dataset.sz);});
 
 /* ================================================================= toasts */
 function toast(msg,err=false){const t=document.createElement('div');t.className='toast'+(err?' err':'');
@@ -472,13 +643,13 @@ $('url').addEventListener('input',e=>{const k=detect(e.target.value);
   $('srcIco').textContent=SRC_ICONS[k][0];$('srcTag').textContent=SRC_ICONS[k][1];});
 
 /* ================================================================= examples */
-const EX_META={"Autumn boulevard":["🍂","urban · leaves · traffic"],"Garden kitten":["🐱","animal · close-up"],"Office worker":["💼","people · workspace"]};
+const EX_META={"Autumn boulevard":["leaf","urban · leaves · traffic"],"Garden kitten":["paw","animal · close-up"],"Office worker":["briefcase","people · workspace"]};
 fetch('/api/examples').then(r=>r.json()).then(ex=>{
   $('examples').innerHTML='';
   Object.entries(ex).forEach(([name,u])=>{
-    const [emo,sub]=EX_META[name]||["🎬","sample clip"];
+    const [ic,sub]=EX_META[name]||["video","sample clip"];
     const d=document.createElement('div');d.className='ex';
-    d.innerHTML=`<div class="ico">${emo}</div><div><b>${name}</b><span>${sub} · ~45s run</span></div>`;
+    d.innerHTML=`<div class="ico">${ICON(ic,21)}</div><div><b>${name}</b><span>${sub} · ~45s run</span></div>`;
     d.onclick=()=>{$('url').value=u;$('url').dispatchEvent(new Event('input'));analyze();};
     $('examples').appendChild(d);});});
 
@@ -509,9 +680,12 @@ async function upload(f){
 /* ================================================================= analyze / probe */
 $('analyzeBtn').onclick=()=>analyze();
 $('url').addEventListener('keydown',e=>{if(e.key==='Enter')analyze();});
+const PROBE_STEPS=['Contacting the source…','Resolving the stream…','Extracting metadata…','Reading duration · resolution · audio…','Grabbing a preview frame…'];
 async function analyze(){
   const u=$('url').value.trim();if(!u){toast('Paste a link or drop a file first');return;}
   const btn=$('analyzeBtn');btn.disabled=true;btn.textContent='Analyzing…';
+  $('probeStat').classList.add('on');let pi=0;$('probeStatTxt').textContent=PROBE_STEPS[0];
+  const pt=setInterval(()=>{pi=Math.min(pi+1,PROBE_STEPS.length-1);$('probeStatTxt').textContent=PROBE_STEPS[pi];},1500);
   try{
     const r=await fetch('/api/probe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({video_url:u})});
     const d=await r.json();
@@ -520,6 +694,7 @@ async function analyze(){
     renderPreview(d);
     toast('Clip analyzed — ready to generate');
   }catch(e){toast(e.message,true);}
+  clearInterval(pt);$('probeStat').classList.remove('on');
   btn.disabled=false;btn.textContent='Analyze';
 }
 function fmtDur(s){if(s==null)return'—';const m=Math.floor(s/60);return m+':'+String(Math.round(s%60)).padStart(2,'0');}
@@ -527,13 +702,17 @@ function renderPreview(d){
   $('preview').classList.add('on');
   const v=$('video');v.src=S.playback;v.poster='';
   v.onerror=()=>{ if(d.poster){ $('player').innerHTML=`<img class="poster" src="${d.poster}">
-      <div style="position:absolute;bottom:10px;left:12px;font-size:11.5px;color:#fff;background:rgba(0,0,0,.55);padding:4px 10px;border-radius:8px">preview frame — browser can't stream this source, the pipeline still can</div>`;}};
+      <div style="position:absolute;bottom:10px;left:12px;font-size:11.5px;color:#fff;background:rgba(0,0,0,.55);padding:4px 10px;border-radius:8px">Preview frame — the browser can't stream this source, but the pipeline still can</div>`;}};
+  if(d.poster){const pw=$('playerwrap');pw.style.setProperty('--pimg',`url("${d.poster}")`);pw.classList.add('lit');}
+  S.frameTs=[];$('markers').classList.remove('on');
+  $('markers').innerHTML='<span class="mlbl">sampled frames</span>';
   const m=d.meta||{},k=SRC_ICONS[d.kind]||SRC_ICONS.direct;
   $('metagrid').innerHTML=[
-    ['Source',k[1]],['Duration',fmtDur(m.duration)],
-    ['Resolution',m.width?`${m.width}×${m.height}`:'—'],['Frame rate',m.fps?m.fps+' fps':'—'],
-    ['Audio',m.has_audio?(m.acodec||'yes'):'none detected'],['Codec',m.vcodec||'—'],
-  ].map(([a,b])=>`<div class="meta"><div class="k">${a}</div><div class="v">${b}</div></div>`).join('');
+    ['globe','Source',k[1]],['clock','Duration',fmtDur(m.duration)],
+    ['ratio','Resolution',m.width?`${m.width}×${m.height}`:'—'],['gauge','Frame Rate',m.fps?m.fps+' fps':'—'],
+    ['audio','Audio',m.has_audio?(m.acodec||'yes').toUpperCase():'None detected'],['codec','Codec',(m.vcodec||'—').toUpperCase()],
+  ].map(([ic,a,b],i)=>`<div class="meta" style="animation-delay:${i*70}ms" title="${a}: ${b}">
+    <div class="k">${ICON(ic,12)} ${a}</div><div class="v">${b}</div></div>`).join('');
   const val=d.validation||{};const vd=$('valid');
   vd.className='valid '+(val.level==='ok'?'ok':'warn');
   vd.innerHTML=(val.level==='ok'?'✅':'⚠️')+' '+(val.msg||'');
@@ -547,12 +726,24 @@ $('creativity').oninput=e=>{const v=+e.target.value;
   $('crLabel').textContent=CR_LABELS.find(([t])=>v<t)[1];};
 
 /* ================================================================= pipeline UI */
-function buildStages(){$('stages').innerHTML=STAGES.map(([id,ico,lbl])=>
-  `<div class="stage" id="st-${id}"><div class="node">${ico}</div><div class="lbl">${lbl}</div><div class="sub" id="sub-${id}"></div></div>`).join('');}
+const STAGE_T={};let stageTick=null;
+function buildStages(){$('stages').classList.remove('settled');
+  $('stages').innerHTML=STAGES.map(([id,ico,lbl])=>
+  `<div class="stage" id="st-${id}"><div class="node">${ICON(ico)}</div><div class="lbl">${lbl}</div><div class="sub" id="sub-${id}"></div></div>`).join('');
+  Object.keys(STAGE_T).forEach(k=>delete STAGE_T[k]);
+  clearInterval(stageTick);
+  stageTick=setInterval(()=>{for(const id in STAGE_T){const se=$('sub-'+id);if(!se)continue;
+    const base=se.dataset.base||'';const t=Math.round((Date.now()-STAGE_T[id])/1000);
+    se.textContent=(base?base+' · ':'')+t+'s';}},1000);}
 function setStage(id,state,sub){const el=$('st-'+id);if(!el)return;
   el.classList.remove('active','done');if(state)el.classList.add(state);
-  if(state==='done')el.querySelector('.node').textContent='✓';
-  if(sub)$('sub-'+id).textContent=sub;}
+  const se=$('sub-'+id);
+  if(state==='active'){STAGE_T[id]=Date.now();if(sub){se.dataset.base=sub;se.textContent=sub;}}
+  else if(state==='done'){el.querySelector('.node').innerHTML=ICON('check');
+    const t=STAGE_T[id]?Math.round((Date.now()-STAGE_T[id])/1000):null;delete STAGE_T[id];
+    const base=sub||se.dataset.base||'';
+    se.textContent=t!==null?(base?base+' · ':'')+t+'s':base;}
+  else if(sub){se.dataset.base=sub;se.textContent=sub;}}
 const FLAVOR=["Sampling frames straight off the video — no full download…","Kimi K2.6 is watching your clip…",
   "Writing three candidates per voice…","The in-house judge is rejecting the weak ones…",
   "Scoring accuracy and style — exactly like the leaderboard…","Packing hashtags, titles and SEO…"];
@@ -569,10 +760,20 @@ function ringSVG(pct,label){const r=14,c=2*Math.PI*r,off=c*(1-pct);
     <span class="val">${label}</span></div>`;}
 function cardShell(style){const [nm,ico]=STYLES[style];
   return `<div class="card ${style}" id="card-${style}">
-    <h3><span class="tico">${ico}</span><span class="nm">${nm}</span><span class="rings" id="rings-${style}"></span></h3>
+    <h3><span class="tico" style="color:var(--ac)">${ICON(ico,15)}</span><span class="nm">${nm}</span><span class="rings" id="rings-${style}"></span></h3>
     <div class="skel" style="width:94%"></div><div class="skel" style="width:70%"></div>
+    <div class="meta-line">The stylist is writing three candidates…</div>
   </div>`;}
 function buildGrid(){$('grid').innerHTML=Object.keys(STYLES).map(cardShell).join('');}
+function capMetrics(text){
+  const words=(text.trim().match(/\S+/g)||[]).length;
+  const chars=[...text].length;
+  const emo=(text.match(/\p{Extended_Pictographic}/gu)||[]).length;
+  const read=Math.max(1,Math.round(words/3.3));
+  return `<span class="mchip">${ICON('type',11)} ${words} words</span>
+    <span class="mchip">${chars} chars</span>
+    <span class="mchip">${ICON('clock',11)} ~${read}s read</span>`+
+    (emo?`<span class="mchip">${emo} emoji</span>`:'');}
 function fillCard(style,d,animate=true){
   const c=$('card-'+style);if(!c)return;
   S.captions[style]=d;
@@ -580,35 +781,43 @@ function fillCard(style,d,animate=true){
   let cap=c.querySelector('.cap-text');
   if(!cap){cap=document.createElement('div');cap.className='cap-text';cap.contentEditable='true';cap.spellcheck=false;
     cap.addEventListener('focus',()=>pushUndo(style));
-    cap.addEventListener('blur',()=>{S.captions[style].text=cap.textContent.trim();});
-    c.appendChild(cap);
-    const j=document.createElement('div');j.className='jargon';c.appendChild(j);
+    cap.addEventListener('blur',()=>{S.captions[style].text=cap.textContent.trim();
+      const mr=c.querySelector('.mrow');if(mr)mr.innerHTML=capMetrics(S.captions[style].text);});
+    c.insertBefore(cap,c.querySelector('.meta-line'));
+    const mrow=document.createElement('div');mrow.className='mrow';c.insertBefore(mrow,c.querySelector('.meta-line'));
+    const j=document.createElement('div');j.className='jargon';c.insertBefore(j,c.querySelector('.meta-line'));
     const tools=document.createElement('div');tools.className='tools';
-    tools.innerHTML=`<span class="tool" data-a="copy">⧉ Copy</span><span class="tool" data-a="regen">↻ Regenerate</span>
-      <span class="tool menu" data-a="ai">✨ AI edit ▾<div class="dropdown">
-        <div data-rw="shorten">Shorten</div><div data-rw="expand">Expand</div><div data-rw="punchier">Make punchier</div>
-        <div data-rw="simplify">Simplify</div><div data-rw="emoji_add">More emoji</div><div data-rw="emoji_remove">Remove emoji</div>
-        <div data-rw="grammar">Fix grammar</div></div></span>
-      <span class="tool" data-a="undo">↩ Undo</span>`;
-    c.appendChild(tools);
-    const ml=document.createElement('div');ml.className='meta-line';c.appendChild(ml);
+    tools.innerHTML=`<span class="tool" data-a="copy">${ICON('copy')} Copy</span>
+      <span class="tool" data-a="regen">${ICON('refresh')} Regenerate</span>
+      <span class="tool menu" data-a="ai">${ICON('sparkle')} AI Edit<div class="dropdown">
+        <div data-rw="shorten">Shorten</div><div data-rw="expand">Expand</div><div data-rw="punchier">Make Punchier</div>
+        <div data-rw="simplify">Simplify</div><div data-rw="emoji_add">More Emoji</div><div data-rw="emoji_remove">Remove Emoji</div>
+        <div data-rw="grammar">Fix Grammar</div></div></span>
+      <span class="tool" data-a="undo">${ICON('undo')} Undo</span>
+      <span class="tool fav" data-a="fav" title="Favorite">${ICON('star')}</span>`;
+    c.insertBefore(tools,c.querySelector('.meta-line'));
     tools.querySelector('[data-a=copy]').onclick=()=>{navigator.clipboard.writeText(S.captions[style].text);toast('Caption copied');};
     tools.querySelector('[data-a=regen]').onclick=()=>regen(style);
     tools.querySelector('[data-a=undo]').onclick=()=>popUndo(style);
+    tools.querySelector('[data-a=fav]').onclick=e=>{const el=e.currentTarget;el.classList.toggle('on');
+      try{const favs=JSON.parse(localStorage.getItem('fc_favs')||'[]');
+        if(el.classList.contains('on')){favs.push({style,text:S.captions[style].text,at:Date.now()});toast('Saved to favorites');}
+        localStorage.setItem('fc_favs',JSON.stringify(favs.slice(-50)));}catch(_){}};
     const menu=tools.querySelector('[data-a=ai]'),dd=menu.querySelector('.dropdown');
     menu.onclick=e=>{if(e.target.dataset.rw){rewrite(style,e.target.dataset.rw);dd.classList.remove('on');}
       else dd.classList.toggle('on');};
     document.addEventListener('click',e=>{if(!menu.contains(e.target))dd.classList.remove('on');});
   }
   cap.textContent=d.text||'';cap.classList.remove('busy');
+  c.querySelector('.mrow').innerHTML=capMetrics(d.text||'');
   const rings=$('rings-'+style);
   rings.innerHTML=ringSVG(d.accuracy??0,'acc')+ringSVG(d.style??0,'sty');
   requestAnimationFrame(()=>rings.querySelectorAll('.bar').forEach(b=>b.style.strokeDashoffset=b.dataset.off));
   const j=c.querySelector('.jargon');
-  if(d.jargon&&d.jargon.length){j.classList.add('on');j.textContent='🔥 jargon firewall flagged: '+d.jargon.join(', ');}
+  if(d.jargon&&d.jargon.length){j.classList.add('on');j.textContent='⚠ Jargon firewall flagged: '+d.jargon.join(', ');}
   else{j.classList.remove('on');}
   const ml=c.querySelector('.meta-line');
-  ml.textContent=`judge acc ${(d.accuracy??0).toFixed(2)} · style ${(d.style??0).toFixed(2)}`+(d.elapsed_s?` · ${d.elapsed_s}s`:'');
+  ml.textContent=`Judge · ${(d.accuracy??0).toFixed(2)} accuracy · ${(d.style??0).toFixed(2)} style`+(d.elapsed_s?` · ${d.elapsed_s}s`:'');
 }
 function pushUndo(style){(S.undo[style]=S.undo[style]||[]).push(S.captions[style]?.text||'');
   if(S.undo[style].length>25)S.undo[style].shift();}
@@ -638,6 +847,8 @@ function run(){
   $('pipeline').classList.add('on');$('scene').classList.remove('on');
   $('pack').classList.remove('on');$('exports').classList.remove('on');
   $('filmstrip').innerHTML='';$('footer').innerHTML='';
+  $('markers').classList.remove('on');$('markers').innerHTML='<span class="mlbl">sampled frames</span>';S.frameTs=[];
+  $('player').classList.add('scanning');
   buildStages();buildGrid();startFlavor();
   $('runBtn').disabled=true;
   $('pipeline').scrollIntoView({behavior:'smooth',block:'center'});
@@ -649,7 +860,15 @@ function run(){
   es.addEventListener('frame',e=>{const d=JSON.parse(e.data);
     const cell=document.createElement('div');cell.className='cell';
     cell.innerHTML=`<img src="data:image/jpeg;base64,${d.jpg}"><span class="ts">${d.ts}</span>`;
-    $('filmstrip').appendChild(cell);});
+    $('filmstrip').appendChild(cell);
+    // honest frame markers: these are the real sampled timestamps
+    const [mm,ss]=String(d.ts).split(':');const sec=(+mm)*60+parseFloat(ss);
+    const dur=S.probe?.meta?.duration;
+    if(dur&&isFinite(sec)){S.frameTs.push(sec);
+      const mk=document.createElement('span');mk.className='mk';mk.title=d.ts;
+      mk.style.left=`calc(${Math.min(99,sec/dur*100)}% - 1px)`;
+      mk.onclick=()=>{const v=$('video');if(v&&v.src){v.currentTime=sec;v.play?.();}};
+      $('markers').appendChild(mk);$('markers').classList.add('on');}});
   es.addEventListener('scene',e=>renderScene(JSON.parse(e.data)));
   es.addEventListener('style',e=>{const d=JSON.parse(e.data);fillCard(d.style_id,d);});
   es.addEventListener('pack',e=>renderPack(JSON.parse(e.data)));
@@ -662,15 +881,17 @@ function run(){
 }
 function finish(failed){
   S.running=false;$('runBtn').disabled=false;
+  $('player').classList.remove('scanning');
+  $('stages').classList.add('settled');clearInterval(stageTick);
   if(es){es.close();es=null;}
   if(failed)return;
   $('exports').classList.add('on');
   const m=S.models||{};
-  $('footer').innerHTML=`<span>vision <span class="kbd">${m.vision||'?'}</span></span>
-    <span>stylist <span class="kbd">${m.stylist||'?'}</span></span>
-    <span>judge <span class="kbd">${m.judge||'?'}</span></span>
+  $('footer').innerHTML=`<span>Vision <span class="kbd">${m.vision||'?'}</span></span>
+    <span>Stylist <span class="kbd">${m.stylist||'?'}</span></span>
+    <span>Judge <span class="kbd">${m.judge||'?'}</span></span>
     <span>${S.elapsed||'?'}s wall-clock</span>
-    <span style="margin-left:auto">FourCast · AMD ACT II · built on Fireworks AI</span>`;
+    <span style="margin-left:auto">FourCast — The Caption Factory · AMD ACT II</span>`;
   confettiPulse();
 }
 function confettiPulse(){document.querySelectorAll('.card').forEach((c,i)=>{
@@ -788,6 +1009,41 @@ if(new URLSearchParams(location.search).get('mock')){
     S.models={vision:'kimi-k2p6',stylist:'glm-5p2',judge:'gpt-oss-120b'};S.elapsed=44.0;finish();
   });
 }
+
+/* ================================================================= interaction layer */
+const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const FINE=matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+// button ripple
+document.addEventListener('click',e=>{
+  const b=e.target.closest('.btn');if(!b||REDUCED)return;
+  const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height);
+  const s=document.createElement('span');s.className='rip';
+  s.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;
+  b.appendChild(s);setTimeout(()=>s.remove(),600);});
+
+// mouse-follow lighting + gentle card tilt
+if(FINE&&!REDUCED){
+  document.addEventListener('mousemove',e=>{
+    const t=e.target.closest('.card,.panel');
+    if(!t)return;
+    const r=t.getBoundingClientRect();
+    t.style.setProperty('--mx',((e.clientX-r.left)/r.width*100)+'%');
+    t.style.setProperty('--my',((e.clientY-r.top)/r.height*100)+'%');
+    if(t.classList.contains('card')){
+      const rx=((e.clientY-r.top)/r.height-.5)*-3.2, ry=((e.clientX-r.left)/r.width-.5)*3.2;
+      t.style.transform=`translateY(-3px) perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg)`;}
+  },{passive:true});
+  document.addEventListener('mouseout',e=>{
+    const t=e.target.closest('.card');
+    if(t&&!t.contains(e.relatedTarget))t.style.transform='';
+  },{passive:true});
+}
+
+// scroll-triggered section reveals
+{const io=new IntersectionObserver(es=>es.forEach(x=>{
+    if(x.isIntersecting){x.target.classList.add('inview');io.unobserve(x.target);}}),{threshold:.12});
+ document.querySelectorAll('.panel,.sitefoot').forEach(el=>{el.classList.add('reveal');io.observe(el);});}
 
 /* ================================================================= shortcuts */
 addEventListener('keydown',e=>{
