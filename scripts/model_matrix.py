@@ -6,7 +6,6 @@ vision JSON task. Prints verdicts so we can pick per-role models on evidence.
     uv run python scripts/model_matrix.py
 """
 import asyncio
-import json
 import sys
 import time
 

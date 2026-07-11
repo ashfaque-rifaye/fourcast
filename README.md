@@ -185,9 +185,7 @@ agent/                THE submission artifact (batch agent)
 app/main.py           FourCast Studio backend (probe · upload · SSE pipeline · content pack)
 app/static/index.html FourCast Studio frontend (single file, zero build step)
 scripts/
-  model_matrix.py     per-model JSON-mode / latency probe
-  make_deck.js        pitch-deck generator
-  cover.py            cover-image helper
+  model_matrix.py     per-model JSON-mode / latency probe (dev-only)
 tasks.example.json    sample harness input (3 clips)
 Dockerfile            ffmpeg + python; default CMD = python -m agent
 docker-compose.yml    demo UI convenience

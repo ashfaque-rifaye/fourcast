@@ -77,15 +77,14 @@ Env (.env local; baked for container — see Open Questions): `FIREWORKS_API_KEY
        `?mock=1` = canned results view for screenshots/cover (add `&theme=light` for light mode).
        ⚠ GEMMA FINDING (23:15 IST re-probe): key has NO Gemma access (/models lists 7, zero gemma; all gemma IDs
        404) → T2_USE_GEMMA silently falls back to GLM 5.2. Gemma bonus NOT honestly claimable on this key.
-- [x] 6a. 7-slide deck REDESIGNED (premium white/agency theme) + QA'd: assets/FourCast_Deck.pptx.
-       Pipeline (run in order from repo root):
-         1. `python scripts/gen_assets.py`      -> assets/gen/*.png (gradient art: mesh bgs, icon tiles, wordmark, metrics)
-         2. `$env:NODE_PATH=(npm root -g); node scripts/make_deck.js`  -> assets/FourCast_Deck.pptx
-         3. `python scripts/add_transitions.py`  -> injects fade transitions
-       Preview PNGs: `powershell -File scripts/export_png.ps1` (needs PowerPoint) -> assets/deck_png/.
-       Design: white canvas, crimson->violet->blue gradient system, glass cards, soft shadows, gradient
-       icon tiles + oversized gradient metrics. NOTE: pptxgenjs mutates shadow objects in place — always
-       pass a FRESH shadow object per shape (see shadow()/iconShadow() in make_deck.js) or the file corrupts.
+- [x] 6a. 8-slide deck built + QA'd: assets/FourCast_Deck.pptx (+ deck_png/ preview + FourCast_Deck.pdf).
+       Reflects "FourCast — The Caption Factory" (Studio product), live links, real UI screenshots.
+       Slides: 1 Title · 2 Brief · 3 Architecture · 4 Why it scores · 5 Harness armor ·
+               6 FourCast Studio (landing shot) · 7 Judged in the Studio (caption-grid + content-pack shots) · 8 Close (links).
+       NOTE (2026-07-12): the deck/asset GENERATION scripts (make_deck.js, gen_assets.py, add_transitions.py,
+       export_png.ps1, shots.py, cover.py) were REMOVED per user request — they were one-shot build tooling and
+       are not part of the submission. The generated artifacts (assets/*.pptx/.pdf/.png) remain. To regenerate
+       the deck you would recreate those scripts; the artifacts themselves are the deliverable.
        COVER IMAGE = assets/deck_png/Slide1.PNG. Video script + form copy: SUBMISSION.md.
 - [ ] 2. **USER GATE** Create public repo: `cd "D:\Projects\AMD Hackathon Jul 26\AMDHack"; gh repo create fourcast --public --source . --push`
        (AI was classifier-blocked from doing this; everything is committed and ready to push)
