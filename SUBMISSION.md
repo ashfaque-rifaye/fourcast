@@ -27,7 +27,7 @@ Built solo in one day on Fireworks AI (AMD-hardware-hosted serverless models).
 ## Links
 - **GitHub (public):** https://github.com/ashfaque-rifaye/fourcast  ← create + push (gate #1)
 - **Docker image (what the harness pulls):** ghcr.io/ashfaque-rifaye/fourcast:latest ← must be PUBLIC (gate #3)
-- **Demo URL:** (gate #4 — Render/HF Spaces/tunnel; local demo verified working on :8017)
+- **Demo URL:** https://fourcast-demo-163580532635.us-central1.run.app  ← LIVE on Google Cloud Run (verified end-to-end: kitten clip, judge 0.95–1.00, 44s)
 - **Video:** record per script below → YouTube unlisted → paste link
 - **Slides:** assets/FourCast_Deck.pptx → upload
 - **Cover image:** 1200×675 screenshot of the demo UI right after a run completes (four cards + judge badges visible). Crop browser chrome.
