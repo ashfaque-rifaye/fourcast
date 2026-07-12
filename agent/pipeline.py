@@ -16,11 +16,15 @@ STYLE_THRESHOLD = 0.85
 
 # Per-style sampling temperature: cool + precise for formal, warmer for the
 # humorous tones where lexical variety is the point.
+# Accuracy (grounding) is the scored axis that suffers most from high sampling
+# temperature — the humour styles invent details the judge punishes. Style match
+# already saturates near 1.0, so we trade a little lexical wildness for tighter
+# grounding: cool for formal, moderate for the humorous tones.
 STYLE_TEMPS = {
-    "formal": 0.35,
-    "sarcastic": 0.8,
-    "humorous_tech": 0.9,
-    "humorous_non_tech": 0.9,
+    "formal": 0.3,
+    "sarcastic": 0.6,
+    "humorous_tech": 0.7,
+    "humorous_non_tech": 0.6,
 }
 
 # Leaderboard lesson: elaborate self-judge/refine loops that miss the time budget
@@ -46,6 +50,34 @@ async def perceive(url: str) -> dict:
     return fw.parse_json_block(raw)
 
 
+def _coerce_candidates(parsed: object) -> list[str]:
+    """Flatten whatever the stylist returned into clean caption strings.
+
+    Stylist models intermittently break the {"candidates": [str, str, str]}
+    contract — nesting the list a level deep, wrapping items in dicts, or
+    returning a bare list/string. Unhandled, that either crashes the clip into
+    a grounded fallback (a big score drag) or feeds the judge a malformed
+    "three-captions-in-one" blob it scores near zero. Coerce defensively.
+    """
+    out: list[str] = []
+
+    def walk(x: object) -> None:
+        if isinstance(x, str):
+            s = x.strip()
+            if s:
+                out.append(s)
+        elif isinstance(x, list):
+            for y in x:
+                walk(y)
+        elif isinstance(x, dict):
+            for y in x.values():
+                walk(y)
+
+    walk(parsed.get("candidates", parsed) if isinstance(parsed, dict) else parsed)
+    # keep plausible caption lengths; drops stray keys/echoes and empty noise
+    return [c for c in out if 8 <= len(c) <= 400]
+
+
 async def _generate(scene_json: str, style: str, k: int = 3,
                     temperature: float | None = None,
                     model: str | None = None,
@@ -63,8 +95,10 @@ async def _generate(scene_json: str, style: str, k: int = 3,
                               max_tokens=1600,
                               temperature=temperature if temperature is not None
                               else STYLE_TEMPS.get(style, 0.9),
-                              json_mode=True, return_model=True)
-    cands = [c.strip() for c in fw.parse_json_block(raw).get("candidates", []) if c.strip()]
+                              # a transient stylist hiccup zeroes a whole style; retry
+                              # before falling back (only costs calls on actual failure)
+                              retries=2, json_mode=True, return_model=True)
+    cands = _coerce_candidates(fw.parse_json_block(raw))
     if not cands:
         raise RuntimeError(f"stylist returned no candidates for {style}")
     return cands, used
@@ -128,12 +162,12 @@ async def caption_style(scene: dict, style: str, allow_refine: bool = True,
                     scene_report=scene_json,
                     contract=contracts.STYLE_CONTRACTS[style], k=2)},
             ]
+            # Refine exists to FIX accuracy/style — keep it grounded, not wild.
             raw, refine_used = await fw.chat(
                 msgs, stylist_model or fw.STYLIST_MODEL,
                 stylist_fallback if stylist_fallback is not None else fw.STYLIST_FALLBACK,
-                max_tokens=1200, temperature=0.9, json_mode=True, return_model=True)
-            retry_cands = _firewall(style, [c.strip() for c in
-                                            fw.parse_json_block(raw).get("candidates", []) if c.strip()])
+                max_tokens=1200, temperature=0.45, json_mode=True, return_model=True)
+            retry_cands = _firewall(style, _coerce_candidates(fw.parse_json_block(raw)))
             pool = [best] + retry_cands
             verdict2 = await _judge(scene_json, style, pool)
             scores2 = {s["i"]: s for s in verdict2.get("scores", []) if isinstance(s, dict) and "i" in s}
