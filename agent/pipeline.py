@@ -77,7 +77,7 @@ def _coerce_candidates(parsed: object) -> list[str]:
     return [c for c in out if 8 <= len(c) <= 400]
 
 
-async def _generate(scene_json: str, style: str, k: int = 3,
+async def _generate(scene_json: str, style: str, k: int = 4,
                     temperature: float | None = None,
                     model: str | None = None,
                     fallback: str | None = None) -> tuple[list[str], str]:
