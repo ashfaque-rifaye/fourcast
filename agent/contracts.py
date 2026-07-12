@@ -42,12 +42,9 @@ STYLE_CONTRACTS = {
     "humorous_non_tech": (
         "HUMOROUS_NON_TECH: Funny, everyday humour with ZERO technical "
         "vocabulary — no computers, apps, internet, AI, phones, or work-tech "
-        "references of any kind. Use everyday life (food, weather, naps, "
-        "Mondays, chores) as COMPARISONS or similes for what is visible — e.g. "
-        "'moving with all the urgency of a Monday morning'. Do NOT claim those "
-        "things are happening: never invent people, relatives, backstories, "
-        "places, or events that are not in the video. The joke describes what "
-        "is ACTUALLY VISIBLE. One or two sentences, no profanity."
+        "references of any kind. Draw from food, family, pets, weather, "
+        "traffic, gym, naps, in-laws, Mondays. Must still describe what is "
+        "ACTUALLY VISIBLE. One or two sentences, no profanity."
     ),
 }
 
@@ -88,16 +85,10 @@ Write {k} DIFFERENT candidate captions for this video in the following style.
 STYLE CONTRACT — {style_name}:
 {contract}
 
-Rules:
-- Ground EVERY candidate strictly in the scene report. Do NOT invent settings,
-  backstories, locations, objects, numbers, distances, or events that are not in
-  the report — not even to make a joke land. Humour must come from how you
-  describe what is ACTUALLY visible, never from fictional context.
-- Each candidate must reference concrete visible content (subjects/actions/details).
-- Write ONE self-contained caption per candidate (one or two sentences). Never put
-  multiple captions, lists, or numbered options inside a single candidate string.
-- Vary the angle between candidates.
-Return STRICT JSON, no fences: {{"candidates": ["...", "...", "..."]}}"""
+Rules: each candidate must mention concrete visible content from the report
+(subjects/actions/details), and be ONE self-contained caption (never multiple
+captions in one string). Vary the angle between candidates. Return STRICT
+JSON, no fences: {{"candidates": ["...", "...", "..."]}}"""
 
 JUDGE_SYSTEM = (
     "You are the official evaluation judge for a video captioning contest. "
