@@ -94,9 +94,7 @@ async def _generate(scene_json: str, style: str, k: int = 3,
                               max_tokens=1600,
                               temperature=temperature if temperature is not None
                               else STYLE_TEMPS.get(style, 0.9),
-                              # a transient stylist hiccup zeroes a whole style; retry
-                              # before falling back (only costs calls on actual failure)
-                              retries=2, json_mode=True, return_model=True)
+                              json_mode=True, return_model=True)
     cands = _coerce_candidates(fw.parse_json_block(raw))
     if not cands:
         raise RuntimeError(f"stylist returned no candidates for {style}")

@@ -88,7 +88,18 @@ async def run(tasks_path: str, out_path: str) -> int:
         tasks = json.load(f)
     print(f"[runner] {len(tasks)} task(s), budget {BUDGET_S}s", file=sys.stderr)
 
-    results: list[dict] = []
+    # INFRA_ERROR defence: write a COMPLETE fallback results.json BEFORE any
+    # processing, so /output/results.json is valid and scoreable from t=0. After
+    # this, no crash / OOM / hard-kill / timeout can leave empty or partial output
+    # (the thing that scores as an unscored INFRA_ERROR) — the worst case is an
+    # all-fallback file, which still scores. Each finished clip overwrites its slot.
+    results: list[dict] = [_ensure_complete(_fallback_result(t), t) for t in tasks]
+    index: dict[str, int] = {}
+    for i, r in enumerate(results):
+        index.setdefault(r["task_id"], i)
+    _atomic_write(out_path, results)
+    print(f"[runner] wrote initial fallback output for {len(results)} task(s)", file=sys.stderr)
+
     lock = asyncio.Lock()
     sem = asyncio.Semaphore(CLIP_CONCURRENCY)
 
@@ -96,16 +107,20 @@ async def run(tasks_path: str, out_path: str) -> int:
         async with sem:
             try:
                 res = await asyncio.wait_for(process_clip(task), timeout=CLIP_TIMEOUT_S)
-            except Exception as e:  # noqa: BLE001 — timeout or unexpected: ship a grounded fallback
+            except Exception as e:  # noqa: BLE001 — timeout or unexpected: keep the fallback slot
                 print(f"[runner] {task.get('task_id')} fell back ({type(e).__name__}); "
-                      f"emitting grounded captions", file=sys.stderr)
+                      f"keeping grounded fallback", file=sys.stderr)
                 res = _fallback_result(task)
             res = _ensure_complete(res, task)  # hard guarantee: no missing/blank style ever ships
             async with lock:
-                results.append(res)
+                i = index.get(res["task_id"])
+                if i is not None:
+                    results[i] = res            # overwrite the fallback with the real caption
+                else:
+                    results.append(res)
                 _atomic_write(out_path, results)
                 print(f"[runner] {res['task_id']} done "
-                      f"({len(results)}/{len(tasks)}, {time.monotonic() - t0:.0f}s)", file=sys.stderr)
+                      f"({time.monotonic() - t0:.0f}s)", file=sys.stderr)
 
     jobs = [asyncio.create_task(one(t)) for t in tasks]
     try:
@@ -115,17 +130,6 @@ async def run(tasks_path: str, out_path: str) -> int:
               file=sys.stderr)
         for j in jobs:
             j.cancel()
-
-    # INFRA guard: every task MUST have an entry. If a clip was cancelled by the
-    # budget or never finished, emit a grounded fallback for it — empty or partial
-    # output is what turns a slow run into an unscored INFRA_ERROR; a fallback scores.
-    done_ids = {r.get("task_id") for r in results}
-    for t in tasks:
-        tid = str(t.get("task_id", "unknown"))
-        if tid not in done_ids:
-            print(f"[runner] {tid} never completed — emitting fallback so output is complete",
-                  file=sys.stderr)
-            results.append(_ensure_complete(_fallback_result(t), t))
 
     try:
         _validate(results)
