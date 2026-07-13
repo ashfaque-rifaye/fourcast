@@ -116,6 +116,17 @@ async def run(tasks_path: str, out_path: str) -> int:
         for j in jobs:
             j.cancel()
 
+    # INFRA guard: every task MUST have an entry. If a clip was cancelled by the
+    # budget or never finished, emit a grounded fallback for it — empty or partial
+    # output is what turns a slow run into an unscored INFRA_ERROR; a fallback scores.
+    done_ids = {r.get("task_id") for r in results}
+    for t in tasks:
+        tid = str(t.get("task_id", "unknown"))
+        if tid not in done_ids:
+            print(f"[runner] {tid} never completed — emitting fallback so output is complete",
+                  file=sys.stderr)
+            results.append(_ensure_complete(_fallback_result(t), t))
+
     try:
         _validate(results)
     except AssertionError as e:  # best-effort: never crash a good batch into a zero

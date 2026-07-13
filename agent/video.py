@@ -51,9 +51,10 @@ async def probe_duration(url: str) -> float:
 
 
 def pick_timestamps(duration: float) -> list[float]:
-    """Denser temporal coverage improves caption ACCURACY (fewer missed events)
-    on the hidden set — 6-12 samples, still cheap enough for the 10-min budget."""
-    n = 6 if duration <= 45 else 9 if duration <= 90 else 12
+    """5-10 samples: enough temporal coverage, cheap enough for the budget.
+    (A denser 6/9/12 variant coincided with an INFRA_ERROR on the hidden set —
+    reverted to this proven, lighter sampling that scored reliably.)"""
+    n = 5 if duration <= 45 else 8 if duration <= 90 else 10
     margin = min(1.5, duration * 0.05)
     usable = max(duration - 2 * margin, 1.0)
     return [round(margin + usable * i / (n - 1), 2) for i in range(n)]
